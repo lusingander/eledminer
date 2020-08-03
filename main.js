@@ -2,19 +2,34 @@ const electron = require('electron');
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 
+const PHPServer = require('php-server-manager');
+
+const server = new PHPServer({
+    port: 8000,
+    directory: __dirname,
+    directives: {
+        display_errors: 1,
+        expose_php: 1
+    }
+});
+
 let mainWindow;
 
 app.on('window-all-closed', function() {
   if (process.platform !== 'darwin') {
+    server.close();
     app.quit();
   }
 });
 
 function createWindow() {
+  server.run();
+
   mainWindow = new BrowserWindow({width: 800, height: 600});
-  mainWindow.loadURL('file://' + __dirname + '/index.html');
+  mainWindow.loadURL(`http://${server.host}:${server.port}`);
 
   mainWindow.on('closed', function() {
+    server.close();
     mainWindow = null;
   });
 };
