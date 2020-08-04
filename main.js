@@ -25,7 +25,7 @@ app.on("window-all-closed", function() {
 function createWindow() {
   server.run();
 
-  mainWindow = new BrowserWindow({ width: 800, height: 600 });
+  mainWindow = new BrowserWindow({ width: 1200, height: 800 });
   mainWindow.loadURL(`http://${server.host}:${server.port}`);
 
   mainWindow.on("closed", function() {
