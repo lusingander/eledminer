@@ -1,8 +1,16 @@
 <?php
+
 function adminer_object() {
+
     // required to run any plugin
     include_once "./adminer/plugins/plugin.php";
     
+    class AdminerCustomization extends AdminerPlugin {
+        function css() {
+            return array("./adminer/adminer.css");
+        }
+    }
+
     // autoloader
     foreach (glob("adminer/plugins/*.php") as $filename) {
         include_once "./$filename";
@@ -18,7 +26,7 @@ function adminer_object() {
     return new AdminerCustomization($plugins);
     */
     
-    return new AdminerPlugin($plugins);
+    return new AdminerCustomization($plugins);
 }
 
 // include original Adminer or Adminer Editor
