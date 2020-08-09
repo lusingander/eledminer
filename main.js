@@ -1,7 +1,4 @@
-const electron = require("electron");
-const app = electron.app;
-const BrowserWindow = electron.BrowserWindow;
-const BrowserView = electron.BrowserView;
+const { app, BrowserWindow, BrowserView, ipcMain } = require("electron");
 
 const PHPServer = require("php-server-manager");
 
@@ -26,34 +23,61 @@ app.on("window-all-closed", function() {
 function createWindow() {
   server.run();
 
-  const w = 1200;
-  const h = 800;
+  const defaultWindowWidth = 1200;
+  const defaultWindowHeight = 800;
   mainWindow = new BrowserWindow({
-    width: w,
-    height: h,
+    width: defaultWindowWidth,
+    height: defaultWindowHeight,
     useContentSize: true,
   });
 
-  const view = new BrowserView();
-  mainWindow.addBrowserView(view);
+  const menuView = new BrowserView({
+    webPreferences: {
+      preload: `${__dirname}/menu.js`,
+    },
+  });
+  mainWindow.addBrowserView(menuView);
 
-  view.setBounds({
+  const menuViewHeight = 40;
+  menuView.setBounds({
     x: 0,
     y: 0,
-    width: w,
-    height: h,
+    width: defaultWindowWidth,
+    height: menuViewHeight,
   });
-  view.setAutoResize({
+  menuView.setAutoResize({
+    width: true,
+  });
+  menuView.webContents.loadURL("file://" + __dirname + "/menu.html");
+
+  const mainView = new BrowserView();
+  mainWindow.addBrowserView(mainView);
+
+  mainView.setBounds({
+    x: 0,
+    y: menuViewHeight,
+    width: defaultWindowWidth,
+    height: defaultWindowHeight - menuViewHeight,
+  });
+  mainView.setAutoResize({
     width: true,
     height: true,
   });
-  view.webContents.loadURL(`http://${server.host}:${server.port}`);
+  mainView.webContents.loadURL(`http://${server.host}:${server.port}`);
 
   mainWindow.on("closed", function() {
     server.close();
     mainWindow = null;
   });
 }
+
+ipcMain.on("HOME", () => {
+  console.log("HOME");
+});
+
+ipcMain.on("SETTINGS", () => {
+  console.log("SETTINGS");
+});
 
 app.on("activate", function() {
   if (mainWindow === null) {
