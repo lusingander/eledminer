@@ -4,12 +4,14 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "npx electron ."
+    "start": "npx electron .",
+    "build": "npx electron-packager . eledminer --platform=darwin --arch=x64 --overwrite"
   },
   "author": "lusingander",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^9.1.2"
+    "electron": "^9.1.2",
+    "electron-packager": "^15.0.0"
   },
   "dependencies": {
     "php-server-manager": "^1.3.3"
