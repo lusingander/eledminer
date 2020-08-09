@@ -1,6 +1,7 @@
 const electron = require("electron");
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
+const BrowserView = electron.BrowserView;
 
 const PHPServer = require("php-server-manager");
 
@@ -25,8 +26,28 @@ app.on("window-all-closed", function() {
 function createWindow() {
   server.run();
 
-  mainWindow = new BrowserWindow({ width: 1200, height: 800 });
-  mainWindow.loadURL(`http://${server.host}:${server.port}`);
+  const w = 1200;
+  const h = 800;
+  mainWindow = new BrowserWindow({
+    width: w,
+    height: h,
+    useContentSize: true,
+  });
+
+  const view = new BrowserView();
+  mainWindow.addBrowserView(view);
+
+  view.setBounds({
+    x: 0,
+    y: 0,
+    width: w,
+    height: h,
+  });
+  view.setAutoResize({
+    width: true,
+    height: true,
+  });
+  view.webContents.loadURL(`http://${server.host}:${server.port}`);
 
   mainWindow.on("closed", function() {
     server.close();
