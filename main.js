@@ -25,7 +25,7 @@ function createWindow() {
 
   const defaultWindowWidth = 1200;
   const defaultWindowHeight = 800;
-  const menuViewHeight = 40;
+  const menuViewWidth = 50;
 
   mainWindow = new BrowserWindow({
     width: defaultWindowWidth,
@@ -43,11 +43,11 @@ function createWindow() {
   menuView.setBounds({
     x: 0,
     y: 0,
-    width: defaultWindowWidth,
-    height: menuViewHeight,
+    width: menuViewWidth,
+    height: defaultWindowHeight,
   });
   menuView.setAutoResize({
-    width: true,
+    height: true,
   });
   menuView.webContents.loadURL("file://" + __dirname + "/menu.html");
 
@@ -55,10 +55,10 @@ function createWindow() {
   mainWindow.addBrowserView(mainView);
 
   mainView.setBounds({
-    x: 0,
-    y: menuViewHeight,
-    width: defaultWindowWidth,
-    height: defaultWindowHeight - menuViewHeight,
+    x: menuViewWidth,
+    y: 0,
+    width: defaultWindowWidth - menuViewWidth,
+    height: defaultWindowHeight,
   });
   mainView.setAutoResize({
     width: true,
@@ -74,17 +74,17 @@ function createWindow() {
   ipcMain.on("HOME", () => {
     mainView.webContents.loadURL(baseUrl);
     mainView.setBounds({
-      x: 0,
-      y: menuViewHeight,
-      width: defaultWindowWidth,
-      height: defaultWindowHeight - menuViewHeight,
+      x: menuViewWidth,
+      y: 0,
+      width: defaultWindowWidth - menuViewWidth,
+      height: defaultWindowHeight,
     });
   });
 
   ipcMain.on("SETTINGS", () => {
     mainView.setBounds({
       x: 0,
-      y: menuViewHeight,
+      y: 0,
       width: 0,
       height: 0,
     });

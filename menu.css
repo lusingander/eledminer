@@ -1,0 +1,25 @@
+.menu-area-body {
+  background-color: #e2e2e2;
+}
+
+.menu-area {
+  text-align: center;
+}
+
+.btn-icon {
+  font-size: 32px;
+  user-select: none;
+}
+
+.btn-icon:hover {
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.btn-icon-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  margin: auto;
+}
