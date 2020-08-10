@@ -127,8 +127,13 @@ function createWindow() {
   });
 
   ipcMain.on("SETTINGS_SAVE", (event, args) => {
-    UserSettings.save(args);
-    event.reply("SETTINGS_SAVE_SUCCESS", UserSettings.load());
+    UserSettings.save(args.settings);
+    if (args.restart) {
+      app.relaunch();
+      app.exit();
+    } else {
+      event.reply("SETTINGS_SAVE_SUCCESS");
+    }
   });
 
   ipcMain.on("SETTINGS_CANCEL", () => {

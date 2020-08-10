@@ -71,6 +71,8 @@
       </div>
     </div>
   </section>
+
+  <!-- buttons -->
   <div class="buttons are-medium">
     <button id="save-btn" class="button is-success is-outlined">
       <span>Save</span>
@@ -79,9 +81,29 @@
       <span>Cancel</span>
     </button>
   </div>
+
+  <!-- confirm -->
+  <div id="save-confirm-modal" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Confirm</p>
+      </header>
+      <section class="modal-card-body">
+        <div>Restart application to apply settings changes.</div>
+      </section>
+      <footer class="modal-card-foot">
+        <button id="save-confirm-restart" class="button is-danger">Restart now</button>
+        <button id="save-confirm-postpone" class="button is-light">Postpone</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- notification -->
   <div id="save-success-notification" class="notification is-success">
     <span>Settings were saved successfully</span>
   </div>
+
   <!-- https://qiita.com/nagtkk/items/27ff4f2fe17746afabdd -->
   <!-- https://iwb.jp/chrome-transition-property-bug-test/ -->
   <script>0;</script>

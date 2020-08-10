@@ -18,8 +18,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
   const saveButton = document.querySelector("#save-btn");
   saveButton.addEventListener("click", function(e) {
-    // confirm: restart
-    ipcRenderer.send("SETTINGS_SAVE", getUserSettings());
+    const modal = document.querySelector("#save-confirm-modal");
+    modal.classList.add("is-active");
   });
   ipcRenderer.on("SETTINGS_SAVE_SUCCESS", () => {
     const not = document.querySelector("#save-success-notification");
@@ -27,6 +27,26 @@ document.addEventListener("DOMContentLoaded", function() {
     setTimeout(function() {
       not.classList.remove("notification-visible");
     }, 4000);
+  });
+
+  const restartButton = document.querySelector("#save-confirm-restart");
+  restartButton.addEventListener("click", function(e) {
+    const modal = document.querySelector("#save-confirm-modal");
+    modal.classList.remove("is-active");
+    ipcRenderer.send("SETTINGS_SAVE", {
+      settings: getUserSettings(),
+      restart: true,
+    });
+  });
+
+  const postponeButton = document.querySelector("#save-confirm-postpone");
+  postponeButton.addEventListener("click", function(e) {
+    const modal = document.querySelector("#save-confirm-modal");
+    modal.classList.remove("is-active");
+    ipcRenderer.send("SETTINGS_SAVE", {
+      settings: getUserSettings(),
+      restart: false,
+    });
   });
 
   const cancelButton = document.querySelector("#cancel-btn");
