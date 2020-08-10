@@ -3,3 +3,17 @@
   right: 30px;
   bottom: 20px;
 }
+
+.notification {
+  visibility: hidden;
+  position: fixed;
+  right: 30px;
+  top: 20px;
+  opacity: 0.0;
+  transition: all 1000ms 0s linear;
+}
+
+.notification-visible {
+  visibility: visible;
+  opacity: 1.0;
+}

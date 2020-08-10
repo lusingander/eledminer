@@ -126,8 +126,9 @@ function createWindow() {
     event.reply("SETTINGS_LOADED_REPLY", UserSettings.load());
   });
 
-  ipcMain.on("SETTINGS_SAVE", (_, args) => {
+  ipcMain.on("SETTINGS_SAVE", (event, args) => {
     UserSettings.save(args);
+    event.reply("SETTINGS_SAVE_SUCCESS", UserSettings.load());
   });
 
   ipcMain.on("SETTINGS_CANCEL", () => {

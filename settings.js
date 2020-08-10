@@ -21,6 +21,13 @@ document.addEventListener("DOMContentLoaded", function() {
     // confirm: restart
     ipcRenderer.send("SETTINGS_SAVE", getUserSettings());
   });
+  ipcRenderer.on("SETTINGS_SAVE_SUCCESS", () => {
+    const not = document.querySelector("#save-success-notification");
+    not.classList.add("notification-visible");
+    setTimeout(function() {
+      not.classList.remove("notification-visible");
+    }, 4000);
+  });
 
   const cancelButton = document.querySelector("#cancel-btn");
   cancelButton.addEventListener("click", function(e) {
