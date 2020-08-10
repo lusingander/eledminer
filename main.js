@@ -27,6 +27,20 @@ function createWindow() {
   const defaultWindowHeight = 800;
   const menuViewWidth = 50;
 
+  const mainContentBounds = {
+    x: menuViewWidth,
+    y: 0,
+    width: defaultWindowWidth - menuViewWidth,
+    height: defaultWindowHeight,
+  };
+  const menuContentBounds = {
+    x: 0,
+    y: 0,
+    width: menuViewWidth,
+    height: defaultWindowHeight,
+  };
+  const zeroContentBounds = { x: 0, y: 0, width: 0, height: 0 };
+
   mainWindow = new BrowserWindow({
     width: defaultWindowWidth,
     height: defaultWindowHeight,
@@ -40,26 +54,30 @@ function createWindow() {
   });
   mainWindow.addBrowserView(menuView);
 
-  menuView.setBounds({
-    x: 0,
-    y: 0,
-    width: menuViewWidth,
-    height: defaultWindowHeight,
-  });
+  menuView.setBounds(menuContentBounds);
   menuView.setAutoResize({
     height: true,
   });
   menuView.webContents.loadURL("file://" + __dirname + "/menu.html");
 
+  const settingsView = new BrowserView({
+    webPreferences: {
+      preload: `${__dirname}/settings.js`,
+    },
+  });
+  mainWindow.addBrowserView(settingsView);
+
+  settingsView.setBounds(zeroContentBounds);
+  settingsView.setAutoResize({
+    width: true,
+    height: true,
+  });
+  settingsView.webContents.loadURL("file://" + __dirname + "/settings.html");
+
   const mainView = new BrowserView();
   mainWindow.addBrowserView(mainView);
 
-  mainView.setBounds({
-    x: menuViewWidth,
-    y: 0,
-    width: defaultWindowWidth - menuViewWidth,
-    height: defaultWindowHeight,
-  });
+  mainView.setBounds(mainContentBounds);
   mainView.setAutoResize({
     width: true,
     height: true,
@@ -73,21 +91,13 @@ function createWindow() {
 
   ipcMain.on("HOME", () => {
     mainView.webContents.loadURL(baseUrl);
-    mainView.setBounds({
-      x: menuViewWidth,
-      y: 0,
-      width: defaultWindowWidth - menuViewWidth,
-      height: defaultWindowHeight,
-    });
+    mainView.setBounds(mainContentBounds);
+    settingsView.setBounds(zeroContentBounds);
   });
 
   ipcMain.on("SETTINGS", () => {
-    mainView.setBounds({
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
-    });
+    settingsView.setBounds(mainContentBounds);
+    mainView.setBounds(zeroContentBounds);
   });
 }
 
