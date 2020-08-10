@@ -92,15 +92,31 @@ function createWindow() {
     mainWindow = null;
   });
 
-  ipcMain.on("HOME", () => {
-    mainView.webContents.loadURL(baseUrl);
+  const openSettings = () => {
+    settingsView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
+    mainView.setBounds(zeroContentBounds());
+  };
+
+  const closeSettings = () => {
     mainView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
     settingsView.setBounds(zeroContentBounds());
+  };
+
+  ipcMain.on("HOME", () => {
+    mainView.webContents.loadURL(baseUrl);
+    closeSettings();
   });
 
   ipcMain.on("SETTINGS", () => {
-    settingsView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
-    mainView.setBounds(zeroContentBounds());
+    openSettings();
+  });
+
+  ipcMain.on("SETTINGS_SAVE", () => {
+    closeSettings();
+  });
+
+  ipcMain.on("SETTINGS_CANCEL", () => {
+    closeSettings();
   });
 }
 
