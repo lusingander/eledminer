@@ -25,27 +25,30 @@ function createWindow() {
 
   const defaultWindowWidth = 1200;
   const defaultWindowHeight = 800;
+  const minWindowWidth = 600;
+  const minWindowHeight = 400;
   const menuViewWidth = 50;
 
-  const mainContentBounds = {
+  const mainContentBounds = (w, h) => ({
     x: menuViewWidth,
     y: 0,
-    width: defaultWindowWidth - menuViewWidth,
-    height: defaultWindowHeight,
-  };
-  const menuContentBounds = {
+    width: w - menuViewWidth,
+    height: h,
+  });
+  const menuContentBounds = (h) => ({
     x: 0,
     y: 0,
     width: menuViewWidth,
-    height: defaultWindowHeight,
-  };
-  const zeroContentBounds = { x: 0, y: 0, width: 0, height: 0 };
+    height: h,
+  });
+  const zeroContentBounds = () => ({ x: 0, y: 0, width: 0, height: 0 });
 
   mainWindow = new BrowserWindow({
     width: defaultWindowWidth,
     height: defaultWindowHeight,
     useContentSize: true,
   });
+  mainWindow.setMinimumSize(minWindowWidth, minWindowHeight);
 
   const menuView = new BrowserView({
     webPreferences: {
@@ -54,7 +57,7 @@ function createWindow() {
   });
   mainWindow.addBrowserView(menuView);
 
-  menuView.setBounds(menuContentBounds);
+  menuView.setBounds(menuContentBounds(mainWindow.getContentSize()[1]));
   menuView.setAutoResize({
     height: true,
   });
@@ -67,7 +70,7 @@ function createWindow() {
   });
   mainWindow.addBrowserView(settingsView);
 
-  settingsView.setBounds(zeroContentBounds);
+  settingsView.setBounds(zeroContentBounds());
   settingsView.setAutoResize({
     width: true,
     height: true,
@@ -77,7 +80,7 @@ function createWindow() {
   const mainView = new BrowserView();
   mainWindow.addBrowserView(mainView);
 
-  mainView.setBounds(mainContentBounds);
+  mainView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
   mainView.setAutoResize({
     width: true,
     height: true,
@@ -91,13 +94,13 @@ function createWindow() {
 
   ipcMain.on("HOME", () => {
     mainView.webContents.loadURL(baseUrl);
-    mainView.setBounds(mainContentBounds);
-    settingsView.setBounds(zeroContentBounds);
+    mainView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
+    settingsView.setBounds(zeroContentBounds());
   });
 
   ipcMain.on("SETTINGS", () => {
-    settingsView.setBounds(mainContentBounds);
-    mainView.setBounds(zeroContentBounds);
+    settingsView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
+    mainView.setBounds(zeroContentBounds());
   });
 }
 
