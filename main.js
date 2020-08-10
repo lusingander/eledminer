@@ -2,8 +2,9 @@ const { app, BrowserWindow, BrowserView, ipcMain } = require("electron");
 const UserSettings = require("./store");
 const PHPServer = require("php-server-manager");
 
+const userSettings = UserSettings.load();
 const server = new PHPServer({
-  port: 8000,
+  port: userSettings.port,
   directory: __dirname,
   directives: {
     display_errors: 1,
@@ -127,7 +128,6 @@ function createWindow() {
 
   ipcMain.on("SETTINGS_SAVE", (_, args) => {
     UserSettings.save(args);
-    closeSettings();
   });
 
   ipcMain.on("SETTINGS_CANCEL", () => {
