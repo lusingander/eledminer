@@ -1,4 +1,5 @@
 const { app, BrowserWindow, BrowserView, ipcMain } = require("electron");
+const UserSettings = require("./store");
 const PHPServer = require("php-server-manager");
 
 const server = new PHPServer({
@@ -63,20 +64,6 @@ function createWindow() {
   });
   menuView.webContents.loadURL("file://" + __dirname + "/menu.html");
 
-  const settingsView = new BrowserView({
-    webPreferences: {
-      preload: `${__dirname}/settings.js`,
-    },
-  });
-  mainWindow.addBrowserView(settingsView);
-
-  settingsView.setBounds(zeroContentBounds());
-  settingsView.setAutoResize({
-    width: true,
-    height: true,
-  });
-  settingsView.webContents.loadURL("file://" + __dirname + "/settings.html");
-
   const mainView = new BrowserView();
   mainWindow.addBrowserView(mainView);
 
@@ -92,14 +79,37 @@ function createWindow() {
     mainWindow = null;
   });
 
-  const openSettings = () => {
+  let settingsView;
+  const createSettingsView = () => {
+    settingsView = new BrowserView({
+      webPreferences: {
+        preload: `${__dirname}/settings.js`,
+      },
+    });
+    mainWindow.addBrowserView(settingsView);
+
     settingsView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
+    settingsView.setAutoResize({
+      width: true,
+      height: true,
+    });
+    settingsView.webContents.loadURL("file://" + __dirname + "/settings.html");
+  };
+
+  const openSettings = () => {
+    if (!settingsView) {
+      createSettingsView();
+    }
     mainView.setBounds(zeroContentBounds());
   };
 
   const closeSettings = () => {
+    if (settingsView) {
+      mainWindow.removeBrowserView(settingsView);
+      settingsView.destroy();
+      settingsView = null;
+    }
     mainView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
-    settingsView.setBounds(zeroContentBounds());
   };
 
   ipcMain.on("HOME", () => {
@@ -111,7 +121,12 @@ function createWindow() {
     openSettings();
   });
 
-  ipcMain.on("SETTINGS_SAVE", () => {
+  ipcMain.on("SETTINGS_LOADED", (event) => {
+    event.reply("SETTINGS_LOADED_REPLY", UserSettings.load());
+  });
+
+  ipcMain.on("SETTINGS_SAVE", (_, args) => {
+    UserSettings.save(args);
     closeSettings();
   });
 
