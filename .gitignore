@@ -117,3 +117,8 @@ dist
 
 # build
 eledminer-darwin-x64
+
+# elm
+elm-stuff
+elm.js
+dst

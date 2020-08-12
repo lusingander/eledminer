@@ -84,7 +84,7 @@ function createWindow() {
   const createSettingsView = () => {
     settingsView = new BrowserView({
       webPreferences: {
-        preload: `${__dirname}/settings.js`,
+        nodeIntegration: true,
       },
     });
     mainWindow.addBrowserView(settingsView);
