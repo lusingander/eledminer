@@ -161,7 +161,7 @@ update msg model =
               }
             , Cmd.batch
                 [ postpone <| encodeUserSettings <| .settings model
-                , hideNotificationAfterWait HideNotification
+                , hideNotificationAfterWait
                 ]
             )
 
@@ -427,8 +427,8 @@ classNotificationVisible visible =
         class ""
 
 
-hideNotificationAfterWait : msg -> Cmd msg
-hideNotificationAfterWait msg =
+hideNotificationAfterWait : Cmd Msg
+hideNotificationAfterWait =
     Process.sleep 3000
-        |> Task.andThen (always <| Task.succeed msg)
+        |> Task.andThen (always <| Task.succeed HideNotification)
         |> Task.perform identity
