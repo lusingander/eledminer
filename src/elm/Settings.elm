@@ -1,7 +1,7 @@
-port module Settings exposing (..)
+port module Settings exposing (main)
 
 import Browser
-import Html exposing (..)
+import Html exposing (Html, button, div, footer, h1, h2, h3, header, input, option, p, section, select, span, text)
 import Html.Attributes exposing (class, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
