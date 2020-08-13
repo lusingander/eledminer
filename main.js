@@ -1,5 +1,5 @@
 const { app, BrowserWindow, BrowserView, ipcMain } = require("electron");
-const UserSettings = require("./store");
+const UserSettings = require("./src/store");
 const PHPServer = require("php-server-manager");
 
 const userSettings = UserSettings.load();
@@ -54,7 +54,7 @@ function createWindow() {
 
   const menuView = new BrowserView({
     webPreferences: {
-      preload: `${__dirname}/menu.js`,
+      preload: `${__dirname}/src/view/menu.js`,
     },
   });
   mainWindow.addBrowserView(menuView);
@@ -63,7 +63,7 @@ function createWindow() {
   menuView.setAutoResize({
     height: true,
   });
-  menuView.webContents.loadURL("file://" + __dirname + "/menu.html");
+  menuView.webContents.loadURL("file://" + __dirname + "/src/view/menu.html");
 
   const mainView = new BrowserView();
   mainWindow.addBrowserView(mainView);
@@ -94,7 +94,9 @@ function createWindow() {
       width: true,
       height: true,
     });
-    settingsView.webContents.loadURL("file://" + __dirname + "/settings.html");
+    settingsView.webContents.loadURL(
+      "file://" + __dirname + "/src/view/settings.html"
+    );
   };
 
   const openSettings = () => {

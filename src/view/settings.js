@@ -1,4 +1,4 @@
-const { Elm } = require("./dst/settings.js");
+const { Elm } = require("../../dst/settings.js");
 const { ipcRenderer } = require("electron");
 
 const app = Elm.Settings.init({
