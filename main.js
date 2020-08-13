@@ -54,7 +54,7 @@ function createWindow() {
 
   const menuView = new BrowserView({
     webPreferences: {
-      preload: `${__dirname}/src/view/menu.js`,
+      nodeIntegration: true,
     },
   });
   mainWindow.addBrowserView(menuView);

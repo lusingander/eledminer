@@ -1,13 +1,14 @@
+const { Elm } = require("../../dst/menu.js");
 const { ipcRenderer } = require("electron");
 
-document.addEventListener("DOMContentLoaded", function() {
-  const homeButton = document.querySelector("#home-btn");
-  homeButton.addEventListener("click", function(e) {
-    ipcRenderer.send("HOME");
-  });
+const app = Elm.Menu.init({
+  node: document.getElementById("elm"),
+});
 
-  const settingsButton = document.querySelector("#settings-btn");
-  settingsButton.addEventListener("click", function(e) {
-    ipcRenderer.send("SETTINGS");
-  });
+app.ports.home.subscribe(() => {
+  ipcRenderer.send("HOME");
+});
+
+app.ports.settings.subscribe(() => {
+  ipcRenderer.send("SETTINGS");
 });
