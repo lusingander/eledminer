@@ -2,7 +2,7 @@ port module Settings exposing (..)
 
 import Browser
 import Html exposing (..)
-import Html.Attributes exposing (class, id, placeholder, type_, value)
+import Html.Attributes exposing (class, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import Json.Encode as JE
@@ -414,7 +414,7 @@ classIsActive active =
 
 viewSuccessNotification : UIStatus -> Html Msg
 viewSuccessNotification s =
-    div [ id "save-success-notification", class "notification is-success", classNotificationVisible <| .notificationVisible s ]
+    div [ class "notification is-success", classNotificationVisible <| .notificationVisible s ]
         [ span [] [ text "Settings were saved successfully" ] ]
 
 
