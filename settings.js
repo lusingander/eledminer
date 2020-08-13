@@ -31,9 +31,5 @@ app.ports.postpone.subscribe(function(data) {
 });
 
 ipcRenderer.on("SETTINGS_SAVE_SUCCESS", () => {
-  const not = document.querySelector("#save-success-notification");
-  not.classList.add("notification-visible");
-  setTimeout(function() {
-    not.classList.remove("notification-visible");
-  }, 4000);
+  app.ports.settingsSaveSuccess.send(args);
 });

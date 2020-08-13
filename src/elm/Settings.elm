@@ -6,6 +6,8 @@ import Html.Attributes exposing (class, id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import Json.Encode as JE
+import Process
+import Task
 
 
 port documentLoaded : () -> Cmd msg
@@ -21,6 +23,9 @@ port postpone : JE.Value -> Cmd msg
 
 
 port loadSettings : (JD.Value -> msg) -> Sub msg
+
+
+port settingsSaveSuccess : (() -> msg) -> Sub msg
 
 
 main : Program () Model Msg
@@ -83,12 +88,14 @@ encodeUserSettings s =
 
 type alias UIStatus =
     { confirmModalOpen : Bool
+    , notificationVisible : Bool
     }
 
 
 initUIStatus : UIStatus
 initUIStatus =
     { confirmModalOpen = False
+    , notificationVisible = False
     }
 
 
@@ -98,8 +105,10 @@ type Msg
     | ConfirmRestart
     | ConfirmPostpone
     | LoadSettings (Result JD.Error UserSettings)
+    | SettingsSaveSuccess ()
     | OnInputPort String
     | OnChangeTheme String
+    | HideNotification
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -147,9 +156,13 @@ update msg model =
                 | uiStatus =
                     { status
                         | confirmModalOpen = False
+                        , notificationVisible = True
                     }
               }
-            , postpone <| encodeUserSettings <| .settings model
+            , Cmd.batch
+                [ postpone <| encodeUserSettings <| .settings model
+                , hideNotificationAfterWait HideNotification
+                ]
             )
 
         LoadSettings (Ok s) ->
@@ -161,6 +174,11 @@ update msg model =
 
         LoadSettings (Err _) ->
             -- handle error
+            ( model
+            , Cmd.none
+            )
+
+        SettingsSaveSuccess _ ->
             ( model
             , Cmd.none
             )
@@ -193,11 +211,28 @@ update msg model =
             , Cmd.none
             )
 
+        HideNotification ->
+            let
+                status =
+                    .uiStatus model
+            in
+            ( { model
+                | uiStatus =
+                    { status
+                        | notificationVisible = False
+                    }
+              }
+            , Cmd.none
+            )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    loadSettings (JD.decodeValue userSettingsDecoder)
-        |> Sub.map LoadSettings
+    Sub.batch
+        [ loadSettings (JD.decodeValue userSettingsDecoder)
+            |> Sub.map LoadSettings
+        , settingsSaveSuccess SettingsSaveSuccess
+        ]
 
 
 view : Model -> Html Msg
@@ -215,7 +250,7 @@ view model =
         , viewAppearanceSection settings
         , viewButtons
         , viewSaveConfirmModal status
-        , viewSuccessNotification
+        , viewSuccessNotification status
         ]
 
 
@@ -377,7 +412,23 @@ classIsActive active =
         class ""
 
 
-viewSuccessNotification : Html Msg
-viewSuccessNotification =
-    div [ id "save-success-notification", class "notification is-success" ]
+viewSuccessNotification : UIStatus -> Html Msg
+viewSuccessNotification s =
+    div [ id "save-success-notification", class "notification is-success", classNotificationVisible <| .notificationVisible s ]
         [ span [] [ text "Settings were saved successfully" ] ]
+
+
+classNotificationVisible : Bool -> Html.Attribute Msg
+classNotificationVisible visible =
+    if visible then
+        class "notification-visible"
+
+    else
+        class ""
+
+
+hideNotificationAfterWait : msg -> Cmd msg
+hideNotificationAfterWait msg =
+    Process.sleep 3000
+        |> Task.andThen (always <| Task.succeed msg)
+        |> Task.perform identity
