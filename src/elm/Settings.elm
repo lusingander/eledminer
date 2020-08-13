@@ -2,7 +2,7 @@ port module Settings exposing (main)
 
 import Browser
 import Html exposing (Html, button, div, footer, h1, h2, h3, header, input, option, p, section, select, span, text)
-import Html.Attributes exposing (class, placeholder, type_, value)
+import Html.Attributes exposing (class, disabled, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import Json.Encode as JE
@@ -40,6 +40,7 @@ main =
 
 type alias Model =
     { settings : UserSettings
+    , validStatus : ValidStatus
     , uiStatus : UIStatus
     }
 
@@ -54,19 +55,20 @@ init _ =
 initModel : Model
 initModel =
     { settings = initUserSettings
+    , validStatus = initValidStatus
     , uiStatus = initUIStatus
     }
 
 
 type alias UserSettings =
-    { portNumber : Int
+    { portNumber : String
     , theme : String
     }
 
 
 initUserSettings : UserSettings
 initUserSettings =
-    { portNumber = 0
+    { portNumber = ""
     , theme = ""
     }
 
@@ -74,16 +76,47 @@ initUserSettings =
 userSettingsDecoder : JD.Decoder UserSettings
 userSettingsDecoder =
     JD.map2 UserSettings
-        (JD.field "port" JD.int)
+        (JD.field "port" JD.int |> JD.map String.fromInt)
         (JD.field "theme" JD.string)
 
 
 encodeUserSettings : UserSettings -> JE.Value
 encodeUserSettings s =
     JE.object
-        [ ( "port", JE.int <| .portNumber s )
+        [ ( "port", JE.int <| portNumberAsInt s )
         , ( "theme", JE.string <| .theme s )
         ]
+
+
+portNumberAsInt : UserSettings -> Int
+portNumberAsInt =
+    .portNumber >> toIntOrZero
+
+
+toIntOrZero : String -> Int
+toIntOrZero =
+    String.toInt >> Maybe.withDefault 0
+
+
+type alias ValidStatus =
+    { portNumber : Bool
+    }
+
+
+initValidStatus : ValidStatus
+initValidStatus =
+    { portNumber = True
+    }
+
+
+validPortNumber : String -> Bool
+validPortNumber =
+    toIntOrZero >> (<) 0
+
+
+canSave : ValidStatus -> Bool
+canSave s =
+    s.portNumber
 
 
 type alias UIStatus =
@@ -187,11 +220,18 @@ update msg model =
             let
                 settings =
                     .settings model
+
+                validStatus =
+                    .validStatus model
             in
             ( { model
                 | settings =
                     { settings
-                        | portNumber = s |> String.toInt |> Maybe.withDefault 0
+                        | portNumber = s
+                    }
+                , validStatus =
+                    { validStatus
+                        | portNumber = validPortNumber s
                     }
               }
             , Cmd.none
@@ -246,9 +286,9 @@ view model =
     in
     div []
         [ viewHeader
-        , viewGeneralSection settings
+        , viewGeneralSection model
         , viewAppearanceSection settings
-        , viewButtons
+        , viewButtons model
         , viewSaveConfirmModal status
         , viewSuccessNotification status
         ]
@@ -266,8 +306,8 @@ viewHeader =
         ]
 
 
-viewGeneralSection : UserSettings -> Html Msg
-viewGeneralSection s =
+viewGeneralSection : Model -> Html Msg
+viewGeneralSection model =
     section [ class "section" ]
         [ div [ class "container" ]
             [ h2 [ class "title is-3" ]
@@ -276,28 +316,33 @@ viewGeneralSection s =
                 [ text "Port" ]
             , div [ class "columns" ]
                 [ div [ class "column is-one-quarter" ]
-                    [ viewPortInput s
+                    [ viewPortInput model
                     ]
                 ]
             ]
         ]
 
 
-viewPortInput : UserSettings -> Html Msg
-viewPortInput s =
+viewPortInput : Model -> Html Msg
+viewPortInput model =
     input
         [ class "input"
+        , classInvalidStatus <| model.validStatus.portNumber
         , type_ "number"
         , placeholder "8000"
-        , value <| portStr s
+        , value <| model.settings.portNumber
         , onInput OnInputPort
         ]
         []
 
 
-portStr : UserSettings -> String
-portStr =
-    .portNumber >> String.fromInt
+classInvalidStatus : Bool -> Html.Attribute Msg
+classInvalidStatus valid =
+    if valid then
+        class ""
+
+    else
+        class "is-danger"
 
 
 viewAppearanceSection : UserSettings -> Html Msg
@@ -376,10 +421,10 @@ themeNames =
     ]
 
 
-viewButtons : Html Msg
-viewButtons =
+viewButtons : Model -> Html Msg
+viewButtons model =
     div [ class "buttons are-medium" ]
-        [ button [ onClick Save, class "button is-success is-outlined" ]
+        [ button [ onClick Save, class "button is-success is-outlined", disabled <| not <| canSave model.validStatus ]
             [ span [] [ text "Save" ] ]
         , button [ onClick Cancel, class "button is-light" ]
             [ span [] [ text "Cancel" ] ]
