@@ -16,12 +16,7 @@ app.ports.cancel.subscribe(function(data) {
   ipcRenderer.send("SETTINGS_CANCEL");
 });
 
-app.ports.save.subscribe(function(data) {
-  openConfirmModal();
-});
-
 app.ports.restart.subscribe(function(data) {
-  closeConfirmModal();
   ipcRenderer.send("SETTINGS_SAVE", {
     settings: data,
     restart: true,
@@ -29,7 +24,6 @@ app.ports.restart.subscribe(function(data) {
 });
 
 app.ports.postpone.subscribe(function(data) {
-  closeConfirmModal();
   ipcRenderer.send("SETTINGS_SAVE", {
     settings: data,
     restart: false,
@@ -43,16 +37,3 @@ ipcRenderer.on("SETTINGS_SAVE_SUCCESS", () => {
     not.classList.remove("notification-visible");
   }, 4000);
 });
-
-const openConfirmModal = () => {
-  const modal = findSaveConfirmModal();
-  modal.classList.add("is-active");
-};
-
-const closeConfirmModal = () => {
-  const modal = findSaveConfirmModal();
-  modal.classList.remove("is-active");
-};
-
-const findSaveConfirmModal = () =>
-  document.querySelector("#save-confirm-modal");

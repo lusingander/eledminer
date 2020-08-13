@@ -11,9 +11,6 @@ import Json.Encode as JE
 port documentLoaded : () -> Cmd msg
 
 
-port save : () -> Cmd msg
-
-
 port cancel : () -> Cmd msg
 
 
@@ -38,6 +35,7 @@ main =
 
 type alias Model =
     { settings : UserSettings
+    , uiStatus : UIStatus
     }
 
 
@@ -51,6 +49,7 @@ init _ =
 initModel : Model
 initModel =
     { settings = initUserSettings
+    , uiStatus = initUIStatus
     }
 
 
@@ -82,6 +81,17 @@ encodeUserSettings s =
         ]
 
 
+type alias UIStatus =
+    { confirmModalOpen : Bool
+    }
+
+
+initUIStatus : UIStatus
+initUIStatus =
+    { confirmModalOpen = False
+    }
+
+
 type Msg
     = Save
     | Cancel
@@ -96,8 +106,17 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Save ->
-            ( model
-            , save ()
+            let
+                status =
+                    .uiStatus model
+            in
+            ( { model
+                | uiStatus =
+                    { status
+                        | confirmModalOpen = True
+                    }
+              }
+            , Cmd.none
             )
 
         Cancel ->
@@ -106,12 +125,30 @@ update msg model =
             )
 
         ConfirmRestart ->
-            ( model
+            let
+                status =
+                    .uiStatus model
+            in
+            ( { model
+                | uiStatus =
+                    { status
+                        | confirmModalOpen = False
+                    }
+              }
             , restart <| encodeUserSettings <| .settings model
             )
 
         ConfirmPostpone ->
-            ( model
+            let
+                status =
+                    .uiStatus model
+            in
+            ( { model
+                | uiStatus =
+                    { status
+                        | confirmModalOpen = False
+                    }
+              }
             , postpone <| encodeUserSettings <| .settings model
             )
 
@@ -166,15 +203,18 @@ subscriptions _ =
 view : Model -> Html Msg
 view model =
     let
-        s =
+        settings =
             .settings model
+
+        status =
+            .uiStatus model
     in
     div []
         [ viewHeader
-        , viewGeneralSection s
-        , viewAppearanceSection s
+        , viewGeneralSection settings
+        , viewAppearanceSection settings
         , viewButtons
-        , viewSaveConfirmModal
+        , viewSaveConfirmModal status
         , viewSuccessNotification
         ]
 
@@ -311,9 +351,9 @@ viewButtons =
         ]
 
 
-viewSaveConfirmModal : Html Msg
-viewSaveConfirmModal =
-    div [ id "save-confirm-modal", class "modal" ]
+viewSaveConfirmModal : UIStatus -> Html Msg
+viewSaveConfirmModal s =
+    div [ class "modal", classIsActive <| .confirmModalOpen s ]
         [ div [ class "modal-background" ] []
         , div [ class "modal-content" ]
             [ header [ class "modal-card-head" ]
@@ -326,6 +366,15 @@ viewSaveConfirmModal =
                 ]
             ]
         ]
+
+
+classIsActive : Bool -> Html.Attribute Msg
+classIsActive active =
+    if active then
+        class "is-active"
+
+    else
+        class ""
 
 
 viewSuccessNotification : Html Msg
