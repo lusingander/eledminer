@@ -211,8 +211,7 @@ viewGeneralSection s =
 viewPortInput : UserSettings -> Html Msg
 viewPortInput s =
     input
-        [ id "general-port"
-        , class "input"
+        [ class "input"
         , type_ "number"
         , placeholder "8000"
         , value <| portStr s
@@ -250,8 +249,7 @@ viewThemeSelect s =
             OnChangeTheme selected
     in
     select
-        [ id "appearance-theme"
-        , value (.theme s)
+        [ value (.theme s)
         , onChange handler
         ]
         themeNameOptions
@@ -306,9 +304,9 @@ themeNames =
 viewButtons : Html Msg
 viewButtons =
     div [ class "buttons are-medium" ]
-        [ button [ onClick Save, id "save-btn", class "button is-success is-outlined" ]
+        [ button [ onClick Save, class "button is-success is-outlined" ]
             [ span [] [ text "Save" ] ]
-        , button [ onClick Cancel, id "cancel-btn", class "button is-light" ]
+        , button [ onClick Cancel, class "button is-light" ]
             [ span [] [ text "Cancel" ] ]
         ]
 
@@ -323,8 +321,8 @@ viewSaveConfirmModal =
             , section [ class "modal-card-body" ]
                 [ div [] [ text "Restart application to apply settings changes." ] ]
             , footer [ class "modal-card-foot" ]
-                [ button [ onClick ConfirmRestart, id "save-confirm-restart", class "button is-danger" ] [ text "Restart now" ]
-                , button [ onClick ConfirmPostpone, id "save-confirm-postpone", class "button is-light" ] [ text "Postpone" ]
+                [ button [ onClick ConfirmRestart, class "button is-danger" ] [ text "Restart now" ]
+                , button [ onClick ConfirmPostpone, class "button is-light" ] [ text "Postpone" ]
                 ]
             ]
         ]
