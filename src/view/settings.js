@@ -31,5 +31,5 @@ app.ports.postpone.subscribe(function(data) {
 });
 
 ipcRenderer.on("SETTINGS_SAVE_SUCCESS", () => {
-  app.ports.settingsSaveSuccess.send(args);
+  app.ports.settingsSaveSuccess.send();
 });
