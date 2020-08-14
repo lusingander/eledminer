@@ -10,6 +10,9 @@ const server = new PHPServer({
     display_errors: 1,
     expose_php: 1,
   },
+  env: {
+    ELEDMINER_SETTINGS_THEME: userSettings.theme,
+  },
 });
 
 let mainWindow;

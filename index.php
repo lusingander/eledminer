@@ -7,7 +7,12 @@ function adminer_object() {
     
     class AdminerCustomization extends AdminerPlugin {
         function css() {
-            return array("./adminer/adminer.css");
+            $theme = $_ENV["ELEDMINER_SETTINGS_THEME"];
+            if ($theme === "default") {
+                return array("");
+            }
+            $theme = strtr($theme, " ", "_");
+            return array("./adminer/themes/" . $theme. ".css");
         }
     }
 

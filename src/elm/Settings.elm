@@ -469,7 +469,6 @@ themeNames =
     , "kahi"
     , "cvicebni-ubor"
     , "jukin"
-    , "kahi2"
     ]
 
 
