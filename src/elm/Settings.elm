@@ -1,7 +1,7 @@
 port module Settings exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, footer, h1, h2, h3, header, input, option, p, section, select, span, text)
+import Html exposing (Html, article, button, div, footer, h1, h2, h3, header, input, option, p, section, select, span, text)
 import Html.Attributes exposing (class, disabled, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
@@ -42,6 +42,7 @@ type alias Model =
     { settings : UserSettings
     , validStatus : ValidStatus
     , uiStatus : UIStatus
+    , errorStatus : ErrorStatus
     }
 
 
@@ -57,6 +58,7 @@ initModel =
     { settings = initUserSettings
     , validStatus = initValidStatus
     , uiStatus = initUIStatus
+    , errorStatus = initErrorStatus
     }
 
 
@@ -132,6 +134,19 @@ initUIStatus =
     }
 
 
+type alias ErrorStatus =
+    { errorModalOpen : Bool
+    , lastErrorMessage : String
+    }
+
+
+initErrorStatus : ErrorStatus
+initErrorStatus =
+    { errorModalOpen = False
+    , lastErrorMessage = ""
+    }
+
+
 type Msg
     = Save
     | Cancel
@@ -142,6 +157,7 @@ type Msg
     | OnInputPort String
     | OnChangeTheme String
     | HideNotification
+    | CloseErrorModal
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -205,9 +221,13 @@ update msg model =
             , Cmd.none
             )
 
-        LoadSettings (Err _) ->
-            -- handle error
-            ( model
+        LoadSettings (Err e) ->
+            ( { model
+                | errorStatus =
+                    { errorModalOpen = True
+                    , lastErrorMessage = JD.errorToString e
+                    }
+              }
             , Cmd.none
             )
 
@@ -265,6 +285,20 @@ update msg model =
             , Cmd.none
             )
 
+        CloseErrorModal ->
+            let
+                errorStatus =
+                    .errorStatus model
+            in
+            ( { model
+                | errorStatus =
+                    { errorStatus
+                        | errorModalOpen = False
+                    }
+              }
+            , Cmd.none
+            )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -285,12 +319,30 @@ view model =
             .uiStatus model
     in
     div []
-        [ viewHeader
+        [ viewErrorModal model
+        , viewHeader
         , viewGeneralSection model
         , viewAppearanceSection settings
         , viewButtons model
         , viewSaveConfirmModal status
         , viewSuccessNotification status
+        ]
+
+
+viewErrorModal : Model -> Html Msg
+viewErrorModal model =
+    div [ class "modal", classIsActive <| model.errorStatus.errorModalOpen ]
+        [ div [ class "modal-background" ] []
+        , div [ class "modal-content" ]
+            [ article [ class "message is-danger" ]
+                [ div [ class "message-header" ]
+                    [ p [] [ text "Error" ]
+                    , button [ onClick CloseErrorModal, class "delete" ] []
+                    ]
+                , div [ class "message-body" ]
+                    [ text model.errorStatus.lastErrorMessage ]
+                ]
+            ]
         ]
 
 
