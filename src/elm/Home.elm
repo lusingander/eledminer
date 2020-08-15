@@ -309,7 +309,7 @@ viewSystemSelect =
         handler selected =
             OnChangeConnectionSystem selected
     in
-    div [ class "select" ]
+    div [ class "select is-small" ]
         [ select
             [ onChange handler
             ]
