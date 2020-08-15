@@ -240,15 +240,49 @@ viewConnections : Model -> Html Msg
 viewConnections _ =
     section [ class "section" ]
         [ div [ class "container" ]
-            [ div []
-                [ h2 [ class "title is-4 is-pulled-left" ]
-                    [ text "Connections" ]
-                , div []
-                    [ button
-                        [ class "button is-primary is-small is-rounded is-pulled-right"
-                        , onClick OpenNewConnectionModal
-                        ]
-                        [ text "New Connection" ]
+            [ viewConnectionsHeader
+            , viewConnectionCards
+            ]
+        ]
+
+
+viewConnectionsHeader : Html Msg
+viewConnectionsHeader =
+    div [ class "level" ]
+        [ div [ class "level-left" ]
+            [ h2 [ class "title is-4 level-item" ]
+                [ text "Connections" ]
+            ]
+        , div [ class "level-right" ]
+            [ button
+                [ class "button is-primary is-small is-rounded level-item"
+                , onClick OpenNewConnectionModal
+                ]
+                [ text "New Connection" ]
+            ]
+        ]
+
+
+viewConnectionCards : Html Msg
+viewConnectionCards =
+    div [ class "columns is-multiline" ]
+        (List.repeat 7 dummyCard)
+
+
+dummyCard : Html Msg
+dummyCard =
+    viewConnectionCard "MySQL" "127.0.0.1:3306" "root"
+
+
+viewConnectionCard : String -> String -> String -> Html Msg
+viewConnectionCard system host user =
+    div [ class "column is-one-third" ]
+        [ div [ class "card" ]
+            [ div [ class "card-content" ]
+                [ div [ class "content is-small" ]
+                    [ p [] [ text system ]
+                    , p [] [ text host ]
+                    , p [] [ text user ]
                     ]
                 ]
             ]
