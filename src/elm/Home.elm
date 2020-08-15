@@ -271,20 +271,34 @@ viewConnectionCards =
 
 dummyCard : Html Msg
 dummyCard =
-    viewConnectionCard "MySQL" "127.0.0.1:3306" "root"
+    viewConnectionCard "test connection" "MySQL" "127.0.0.1:3306" "root"
 
 
-viewConnectionCard : String -> String -> String -> Html Msg
-viewConnectionCard system host user =
+viewConnectionCard : String -> String -> String -> String -> Html Msg
+viewConnectionCard name system host user =
     div [ class "column is-one-third" ]
         [ div [ class "card" ]
             [ div [ class "card-content" ]
                 [ div [ class "content is-small" ]
-                    [ p [] [ span [ class "icon" ] [ i [ class "fas fa-database" ] [] ], text system ]
+                    [ viewConnectionCardHeader name
+                    , p [] [ span [ class "icon" ] [ i [ class "fas fa-database" ] [] ], text system ]
                     , p [] [ span [ class "icon" ] [ i [ class "fas fa-network-wired" ] [] ], text host ]
                     , p [] [ span [ class "icon" ] [ i [ class "fas fa-user" ] [] ], text user ]
                     ]
                 ]
+            ]
+        ]
+
+
+viewConnectionCardHeader : String -> Html Msg
+viewConnectionCardHeader name =
+    div [ class "level" ]
+        [ div [ class "level-left" ]
+            [ p [ class "title is-6 card-icon-title" ] [ text name ]
+            ]
+        , div [ class "level-right" ]
+            [ span [ class "icon card-icon-edit" ] [ i [ class "fas fa-edit" ] [] ]
+            , span [ class "icon card-icon-danger" ] [ i [ class "fas fa-window-close" ] [] ]
             ]
         ]
 

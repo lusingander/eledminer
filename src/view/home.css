@@ -1,0 +1,25 @@
+.card-icon-title {
+  cursor: pointer;
+}
+
+.card-icon-title:hover {
+  color: hsl(217, 71%, 53%); /* has-text-link */
+}
+
+.card-icon-edit {
+  color: hsl(0, 0%, 86%); /* has-text-grey-lighter */
+  cursor: pointer;
+}
+
+.card-icon-edit:hover {
+  color: hsl(171, 100%, 41%); /* has-text-primary */
+}
+
+.card-icon-danger {
+  color: hsl(0, 0%, 86%);
+  cursor: pointer;
+}
+
+.card-icon-danger:hover {
+  color: hsl(348, 100%, 61%); /* has-text-danger */
+}
