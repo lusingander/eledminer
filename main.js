@@ -164,18 +164,19 @@ function createWindow() {
     closeSettings();
   });
 
-  ipcMain.on("OPEN_CONNECTION", () => {
+  ipcMain.on("OPEN_CONNECTION", (event, args) => {
     loginAndGetConnectionInfo({
       baseUrl: `http://localhost:${userSettings.port}/`,
-      server: "",
-      username: "",
-      password: "",
+      server: `${args.hostname}:${args.port}`,
+      username: args.username,
+      password: args.password,
     })
       .then((result) =>
         mainWindow.webContents.session.cookies
           .set(result.cookie)
           .then(() => mainView.webContents.loadURL(result.redirectUrl))
       )
+      // dont want to open adminer view if not 200... (return 403 if parmaeter is invalid)
       .then(() => openAdminerView())
       .catch((err) => console.log(`failed connecting database: ${err}`));
   });

@@ -5,6 +5,6 @@ const app = Elm.Home.init({
   node: document.getElementById("elm"),
 });
 
-app.ports.openConnection.subscribe(() => {
-  ipcRenderer.send("OPEN_CONNECTION");
+app.ports.openConnection.subscribe((data) => {
+  ipcRenderer.send("OPEN_CONNECTION", data);
 });
