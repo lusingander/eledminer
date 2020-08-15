@@ -1,7 +1,7 @@
 port module Menu exposing (main)
 
 import Browser
-import Html exposing (Html, div, i, span, text)
+import Html exposing (Html, div, i, span)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 
