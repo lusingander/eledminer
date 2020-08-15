@@ -1,7 +1,7 @@
 port module Home exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, footer, h1, h2, header, input, label, option, p, section, select, text)
+import Html exposing (Html, button, div, footer, h1, h2, header, i, input, label, option, p, section, select, span, text)
 import Html.Attributes exposing (class, disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
@@ -280,9 +280,9 @@ viewConnectionCard system host user =
         [ div [ class "card" ]
             [ div [ class "card-content" ]
                 [ div [ class "content is-small" ]
-                    [ p [] [ text system ]
-                    , p [] [ text host ]
-                    , p [] [ text user ]
+                    [ p [] [ span [ class "icon" ] [ i [ class "fas fa-database" ] [] ], text system ]
+                    , p [] [ span [ class "icon" ] [ i [ class "fas fa-network-wired" ] [] ], text host ]
+                    , p [] [ span [ class "icon" ] [ i [ class "fas fa-user" ] [] ], text user ]
                     ]
                 ]
             ]

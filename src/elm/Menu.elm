@@ -1,7 +1,7 @@
 port module Menu exposing (main)
 
 import Browser
-import Html exposing (Html, div, span, text)
+import Html exposing (Html, div, i, span, text)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 
@@ -66,7 +66,7 @@ view : Model -> Html Msg
 view _ =
     div [ class "menu-area" ]
         [ div [ onClick OnClickHome ]
-            [ span [ class "material-icons btn-icon" ] [ text "home" ] ]
+            [ span [ class "icon btn-icon" ] [ i [ class "fas fa-home" ] [] ] ]
         , div [ onClick OnClickSettings ]
-            [ span [ class "material-icons btn-icon btn-icon-bottom" ] [ text "settings" ] ]
+            [ span [ class "icon btn-icon btn-icon-bottom" ] [ i [ class "fas fa-cog" ] [] ] ]
         ]
