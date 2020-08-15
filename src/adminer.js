@@ -3,12 +3,13 @@ const request = require("request");
 exports.loginAndGetConnectionInfo = (args) => {
   return new Promise((resolve, reject) => {
     const baseUrl = args.baseUrl;
+    const driver = args.driver;
     const server = args.server;
     const username = args.username;
     const password = args.password;
 
     const formData = {
-      "auth[driver]": "server",
+      "auth[driver]": driver,
       "auth[server]": server,
       "auth[username]": username,
       "auth[password]": password,

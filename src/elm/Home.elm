@@ -1,9 +1,10 @@
 port module Home exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, footer, h1, h2, header, input, label, p, section, text)
+import Html exposing (Html, button, div, footer, h1, h2, header, input, label, option, p, section, select, text)
 import Html.Attributes exposing (class, disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
+import Json.Decode as JD
 import Json.Encode as JE
 
 
@@ -52,7 +53,8 @@ initUIStatus =
 
 
 type alias ConnectionSetting =
-    { name : String
+    { system : String
+    , name : String
     , hostname : String
     , portStr : String
     , username : String
@@ -62,7 +64,8 @@ type alias ConnectionSetting =
 
 initConnectionSetting : ConnectionSetting
 initConnectionSetting =
-    { name = ""
+    { system = "server"
+    , name = ""
     , hostname = ""
     , portStr = ""
     , username = ""
@@ -73,7 +76,8 @@ initConnectionSetting =
 encodeConnectionSetting : ConnectionSetting -> JE.Value
 encodeConnectionSetting s =
     JE.object
-        [ ( "hostname", JE.string s.hostname )
+        [ ( "driver", JE.string s.system )
+        , ( "hostname", JE.string s.hostname )
         , ( "port", JE.string s.portStr )
         , ( "username", JE.string s.username )
         , ( "password", JE.string s.password )
@@ -102,6 +106,7 @@ type Msg
     = OnClickLogin
     | OpenNewConnectionModal
     | CloseNewConnectionModal
+    | OnChangeConnectionSystem String
     | OnChangeConnectionName String
     | OnChangeConnectionHostname String
     | OnChangeConnectionPort String
@@ -139,6 +144,16 @@ update msg model =
                 | uiStatus =
                     { uiStatus
                         | newConenctionModalOpen = False
+                    }
+              }
+            , Cmd.none
+            )
+
+        OnChangeConnectionSystem s ->
+            ( { model
+                | connectionSetting =
+                    { connectionSetting
+                        | system = s
                     }
               }
             , Cmd.none
@@ -274,12 +289,55 @@ viewNewConnectionModalContent model =
             model.connectionSetting
     in
     div [ class "container" ]
-        [ viewHorizontalTextInputField "Connection Name" conn.name OnChangeConnectionName
+        [ viewHorizontalSystemSelect "System"
+        , viewHorizontalTextInputField "Connection Name" conn.name OnChangeConnectionName
         , viewHorizontalTextInputField "Hostname" conn.hostname OnChangeConnectionHostname
         , viewHorizontalNumberInputField "Port" conn.portStr OnChangeConnectionPort
         , viewHorizontalTextInputField "Username" conn.username OnChangeConnectionUsername
         , viewHorizontalPasswordInputField "Password" conn.password OnChangeConnectionPassword
         ]
+
+
+viewHorizontalSystemSelect : String -> Html Msg
+viewHorizontalSystemSelect labelText =
+    viewHorizontalComponent labelText [ viewSystemSelect ]
+
+
+viewSystemSelect : Html Msg
+viewSystemSelect =
+    let
+        handler selected =
+            OnChangeConnectionSystem selected
+    in
+    div [ class "select" ]
+        [ select
+            [ onChange handler
+            ]
+            (List.map
+                (\( n, v ) -> option [ value v ] [ text n ])
+                systemNameAndDrivers
+            )
+        ]
+
+
+onChange : (String -> msg) -> Html.Attribute msg
+onChange handler =
+    Html.Events.on "change" (JD.map handler Html.Events.targetValue)
+
+
+systemNameAndDrivers : List ( String, String )
+systemNameAndDrivers =
+    [ ( "MySQL", "server" )
+    , ( "SQLite 3", "sqlite" )
+    , ( "SQLite 2", "sqlite2" )
+    , ( "PostgreSQL", "pgsql" )
+    , ( "Oravle (beta)", "oracle" )
+    , ( "MS SQL (beta)", "mssql" )
+    , ( "Firebird (alpha)", "firebird" )
+    , ( "SimpleDB", "simpledb" )
+    , ( "Elasticsearch (beta)", "elastic" )
+    , ( "ClickHouse (alpha)", "clickhouse" )
+    ]
 
 
 viewHorizontalTextInputField : String -> String -> (String -> Msg) -> Html Msg
@@ -299,21 +357,27 @@ viewHorizontalNumberInputField =
 
 viewHorizontalInputField : String -> String -> String -> (String -> Msg) -> Html Msg
 viewHorizontalInputField inputType labelText inputValue inputMsg =
+    viewHorizontalComponent labelText
+        [ p [ class "control" ]
+            [ input
+                [ class "input is-small"
+                , type_ inputType
+                , value inputValue
+                , onInput inputMsg
+                ]
+                []
+            ]
+        ]
+
+
+viewHorizontalComponent : String -> List (Html Msg) -> Html Msg
+viewHorizontalComponent labelText children =
     div [ class "field is-horizontal" ]
         [ div [ class "field-label is-small" ]
             [ label [ class "label" ] [ text labelText ] ]
         , div [ class "field-body" ]
             [ div [ class "field" ]
-                [ p [ class "control" ]
-                    [ input
-                        [ class "input is-small"
-                        , type_ inputType
-                        , value inputValue
-                        , onInput inputMsg
-                        ]
-                        []
-                    ]
-                ]
+                children
             ]
         ]
 

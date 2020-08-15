@@ -168,6 +168,7 @@ function createWindow() {
   ipcMain.on("OPEN_CONNECTION", (event, args) => {
     loginAndGetConnectionInfo({
       baseUrl: `http://localhost:${userSettings.port}/`,
+      driver: args.driver,
       server: `${args.hostname}:${args.port}`,
       username: args.username,
       password: args.password,
