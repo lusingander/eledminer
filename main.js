@@ -77,6 +77,7 @@ function createWindow() {
   mainWindow.addBrowserView(homeView);
   homeView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
   homeView.setAutoResize({
+    width: true,
     height: true,
   });
   const homeUrl = "file://" + __dirname + "/src/view/home.html";

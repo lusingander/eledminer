@@ -1,7 +1,7 @@
 port module Home exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, footer, header, input, label, p, section, text)
+import Html exposing (Html, button, div, footer, h1, h2, header, input, label, p, section, text)
 import Html.Attributes exposing (class, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Encode as JE
@@ -185,15 +185,40 @@ subscriptions _ =
 view : Model -> Html Msg
 view model =
     div []
-        [ viewConnections model
+        [ viewHeader
+        , viewConnections model
         , viewNewConnectionModal model
+        ]
+
+
+viewHeader : Html Msg
+viewHeader =
+    header [ class "hero is-light" ]
+        [ div [ class "hero-body" ]
+            [ div [ class "container" ]
+                [ h1 [ class "title is-3" ]
+                    [ text "Home" ]
+                ]
+            ]
         ]
 
 
 viewConnections : Model -> Html Msg
 viewConnections _ =
-    div []
-        [ button [ onClick OpenNewConnectionModal ] [ text "New Connection" ]
+    section [ class "section" ]
+        [ div [ class "container" ]
+            [ div []
+                [ h2 [ class "title is-4 is-pulled-left" ]
+                    [ text "Connections" ]
+                , div []
+                    [ button
+                        [ class "button is-primary is-small is-rounded is-pulled-right"
+                        , onClick OpenNewConnectionModal
+                        ]
+                        [ text "New Connection" ]
+                    ]
+                ]
+            ]
         ]
 
 
