@@ -1,6 +1,7 @@
 const { app, BrowserWindow, BrowserView, ipcMain } = require("electron");
 const UserSettings = require("./src/store");
 const PHPServer = require("php-server-manager");
+const { loginAndGetConnectionInfo } = require("./src/adminer");
 
 const userSettings = UserSettings.load();
 const server = new PHPServer({
@@ -68,10 +69,23 @@ function createWindow() {
   });
   menuView.webContents.loadURL("file://" + __dirname + "/src/view/menu.html");
 
+  const homeView = new BrowserView({
+    webPreferences: {
+      nodeIntegration: true,
+    },
+  });
+  mainWindow.addBrowserView(homeView);
+  homeView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
+  homeView.setAutoResize({
+    height: true,
+  });
+  const homeUrl = "file://" + __dirname + "/src/view/home.html";
+  homeView.webContents.loadURL(homeUrl);
+
   const mainView = new BrowserView();
   mainWindow.addBrowserView(mainView);
 
-  mainView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
+  mainView.setBounds(zeroContentBounds());
   mainView.setAutoResize({
     width: true,
     height: true,
@@ -107,6 +121,7 @@ function createWindow() {
       createSettingsView();
     }
     mainView.setBounds(zeroContentBounds());
+    homeView.setBounds(zeroContentBounds());
   };
 
   const closeSettings = () => {
@@ -115,11 +130,17 @@ function createWindow() {
       settingsView.destroy();
       settingsView = null;
     }
+    mainView.setBounds(zeroContentBounds());
+    homeView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
+  };
+
+  const openAdminerView = () => {
+    homeView.setBounds(zeroContentBounds());
     mainView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
   };
 
   ipcMain.on("HOME", () => {
-    mainView.webContents.loadURL(baseUrl);
+    mainView.webContents.loadURL(homeUrl);
     closeSettings();
   });
 
@@ -141,6 +162,22 @@ function createWindow() {
 
   ipcMain.on("SETTINGS_CANCEL", () => {
     closeSettings();
+  });
+
+  ipcMain.on("OPEN_CONNECTION", () => {
+    loginAndGetConnectionInfo({
+      baseUrl: `http://localhost:${userSettings.port}/`,
+      server: "",
+      username: "",
+      password: "",
+    })
+      .then((result) =>
+        mainWindow.webContents.session.cookies
+          .set(result.cookie)
+          .then(() => mainView.webContents.loadURL(result.redirectUrl))
+      )
+      .then(() => openAdminerView())
+      .catch((err) => console.log(`failed connecting database: ${err}`));
   });
 }
 
