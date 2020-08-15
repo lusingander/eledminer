@@ -2,7 +2,7 @@ port module Home exposing (main)
 
 import Browser
 import Html exposing (Html, button, div, footer, h1, h2, header, input, label, p, section, text)
-import Html.Attributes exposing (class, type_, value)
+import Html.Attributes exposing (class, disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Encode as JE
 
@@ -78,6 +78,24 @@ encodeConnectionSetting s =
         , ( "username", JE.string s.username )
         , ( "password", JE.string s.password )
         ]
+
+
+validConnectionSetting : ConnectionSetting -> Bool
+validConnectionSetting s =
+    let
+        isNotEmpty =
+            not << String.isEmpty
+    in
+    isNotEmpty s.name
+        && isNotEmpty s.hostname
+        && validPort s.portStr
+        && isNotEmpty s.username
+        && isNotEmpty s.password
+
+
+validPort : String -> Bool
+validPort =
+    String.toInt >> Maybe.withDefault 0 >> (<) 0
 
 
 type Msg
@@ -233,8 +251,17 @@ viewNewConnectionModal model =
                 [ viewNewConnectionModalContent model
                 ]
             , footer [ class "modal-card-foot" ]
-                [ button [ onClick OnClickLogin, class "button is-primary" ] [ text "OK" ]
-                , button [ onClick CloseNewConnectionModal, class "button is-light" ] [ text "Cancel" ]
+                [ button
+                    [ onClick OnClickLogin
+                    , class "button is-primary"
+                    , disabled <| not <| validConnectionSetting model.connectionSetting
+                    ]
+                    [ text "OK" ]
+                , button
+                    [ onClick CloseNewConnectionModal
+                    , class "button is-light"
+                    ]
+                    [ text "Cancel" ]
                 ]
             ]
         ]
