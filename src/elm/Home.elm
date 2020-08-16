@@ -211,6 +211,7 @@ update msg model =
                 CloseNewConnectionModal
                 { model
                     | savedConnections = conn :: model.savedConnections
+                    , connectionModalInput = initConnectionSetting
                 }
 
         SaveNewConnectionSuccess (Err e) ->
