@@ -68,12 +68,16 @@ initModel =
 
 type alias UIStatus =
     { newConenctionModalOpen : Bool
+    , confirmRemoveConnectionModalOpen : Bool
+    , confirmRemoveConnectionModalTarget : ( String, String )
     }
 
 
 initUIStatus : UIStatus
 initUIStatus =
     { newConenctionModalOpen = False
+    , confirmRemoveConnectionModalOpen = False
+    , confirmRemoveConnectionModalTarget = ( "", "" )
     }
 
 
@@ -182,6 +186,8 @@ type Msg
     | RemoveConnectionSuccess (Result JD.Error String)
     | OpenNewConnectionModal
     | CloseNewConnectionModal
+    | OpenConfirmRemoveConnectionModal ( String, String )
+    | CloseConfirmRemoveConnectionModal
     | OnChangeConnectionSystem String
     | OnChangeConnectionName String
     | OnChangeConnectionHostname String
@@ -268,11 +274,11 @@ update msg model =
             )
 
         RemoveConnectionSuccess (Ok id) ->
-            ( { model
-                | connections = List.filter (\c -> c.id /= id) model.connections
-              }
-            , Cmd.none
-            )
+            update
+                CloseConfirmRemoveConnectionModal
+                { model
+                    | connections = List.filter (\c -> c.id /= id) model.connections
+                }
 
         RemoveConnectionSuccess (Err e) ->
             ( { model
@@ -299,6 +305,28 @@ update msg model =
                 | uiStatus =
                     { uiStatus
                         | newConenctionModalOpen = False
+                    }
+              }
+            , Cmd.none
+            )
+
+        OpenConfirmRemoveConnectionModal target ->
+            ( { model
+                | uiStatus =
+                    { uiStatus
+                        | confirmRemoveConnectionModalOpen = True
+                        , confirmRemoveConnectionModalTarget = target
+                    }
+              }
+            , Cmd.none
+            )
+
+        CloseConfirmRemoveConnectionModal ->
+            ( { model
+                | uiStatus =
+                    { uiStatus
+                        | confirmRemoveConnectionModalOpen = False
+                        , confirmRemoveConnectionModalTarget = ( "", "" )
                     }
               }
             , Cmd.none
@@ -394,11 +422,22 @@ subscriptions _ =
 view : Model -> Html Msg
 view model =
     div []
-        [ viewErrorModal model
-        , viewHeader
-        , viewConnections model
-        , viewNewConnectionModal model
-        ]
+        (viewContents model ++ viewModals model)
+
+
+viewContents : Model -> List (Html Msg)
+viewContents model =
+    [ viewHeader
+    , viewConnections model
+    ]
+
+
+viewModals : Model -> List (Html Msg)
+viewModals model =
+    [ viewErrorModal model
+    , viewNewConnectionModal model
+    , viewConfirmRemoveConnectionModal model
+    ]
 
 
 viewErrorModal : Model -> Html Msg
@@ -511,7 +550,7 @@ viewConnectionCardHeader id name =
             ]
         , div [ class "level-right" ]
             [ span [ class "icon card-icon-edit" ] [ i [ class "fas fa-edit" ] [] ]
-            , span [ onClick <| RemoveConnection id, class "icon card-icon-danger" ] [ i [ class "fas fa-window-close" ] [] ]
+            , span [ onClick <| OpenConfirmRemoveConnectionModal ( id, name ), class "icon card-icon-danger" ] [ i [ class "fas fa-window-close" ] [] ]
             ]
         ]
 
@@ -650,3 +689,27 @@ classIsActive active =
 
     else
         class ""
+
+
+viewConfirmRemoveConnectionModal : Model -> Html Msg
+viewConfirmRemoveConnectionModal model =
+    let
+        open =
+            model.uiStatus.confirmRemoveConnectionModalOpen
+
+        ( id, name ) =
+            model.uiStatus.confirmRemoveConnectionModalTarget
+    in
+    div [ class "modal", classIsActive <| open ]
+        [ div [ class "modal-background" ] []
+        , div [ class "modal-content" ]
+            [ header [ class "modal-card-head" ]
+                [ p [ class "modal-card-title" ] [ text "Confirm" ] ]
+            , section [ class "modal-card-body" ]
+                [ div [] [ text <| "Do you want to remove connection " ++ name ++ "?" ] ]
+            , footer [ class "modal-card-foot" ]
+                [ button [ onClick <| RemoveConnection id, class "button is-danger" ] [ text "OK" ]
+                , button [ onClick CloseConfirmRemoveConnectionModal, class "button is-light" ] [ text "Cancel" ]
+                ]
+            ]
+        ]
