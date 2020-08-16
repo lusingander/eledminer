@@ -5,6 +5,13 @@ const app = Elm.Home.init({
   node: document.getElementById("elm"),
 });
 
+app.ports.loaded.subscribe(() => {
+  ipcRenderer.on("HOME_LOADED_REPLY", (_, args) => {
+    app.ports.loadConnections.send(args);
+  });
+  ipcRenderer.send("HOME_LOADED");
+});
+
 app.ports.openConnection.subscribe((data) => {
   ipcRenderer.send("OPEN_CONNECTION", data);
 });

@@ -149,6 +149,10 @@ function createWindow() {
     openSettings();
   });
 
+  ipcMain.on("HOME_LOADED", (event) => {
+    event.reply("HOME_LOADED_REPLY", Connections.load());
+  });
+
   ipcMain.on("SETTINGS_LOADED", (event) => {
     event.reply("SETTINGS_LOADED_REPLY", UserSettings.load());
   });

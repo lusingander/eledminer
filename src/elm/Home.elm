@@ -1,17 +1,23 @@
 port module Home exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, footer, h1, h2, header, i, input, label, option, p, section, select, span, text)
+import Html exposing (Html, article, button, div, footer, h1, h2, header, i, input, label, option, p, section, select, span, text)
 import Html.Attributes exposing (class, disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import Json.Encode as JE
 
 
+port loaded : () -> Cmd msg
+
+
 port openConnection : JE.Value -> Cmd msg
 
 
 port saveNewConnection : JE.Value -> Cmd msg
+
+
+port loadConnections : (JD.Value -> msg) -> Sub msg
 
 
 port saveNewConnectionSuccess : (() -> msg) -> Sub msg
@@ -28,22 +34,26 @@ main =
 
 
 type alias Model =
-    { uiStatus : UIStatus
-    , connectionSetting : ConnectionSetting
+    { savedConnections : List ConnectionSetting
+    , uiStatus : UIStatus
+    , connectionModalInput : ConnectionSetting
+    , errorStatus : ErrorStatus
     }
 
 
 init : () -> ( Model, Cmd msg )
 init _ =
     ( initModel
-    , Cmd.none
+    , loaded ()
     )
 
 
 initModel : Model
 initModel =
-    { uiStatus = initUIStatus
-    , connectionSetting = initConnectionSetting
+    { savedConnections = []
+    , uiStatus = initUIStatus
+    , connectionModalInput = initConnectionSetting
+    , errorStatus = initErrorStatus
     }
 
 
@@ -79,6 +89,22 @@ initConnectionSetting =
     }
 
 
+connectionSettingListDecoder : JD.Decoder (List ConnectionSetting)
+connectionSettingListDecoder =
+    JD.list connectionSettingDecoder
+
+
+connectionSettingDecoder : JD.Decoder ConnectionSetting
+connectionSettingDecoder =
+    JD.map6 ConnectionSetting
+        (JD.field "driver" JD.string)
+        (JD.field "name" JD.string)
+        (JD.field "hostname" JD.string)
+        (JD.field "port" JD.string)
+        (JD.field "username" JD.string)
+        (JD.field "password" JD.string)
+
+
 encodeConnectionSetting : ConnectionSetting -> JE.Value
 encodeConnectionSetting s =
     JE.object
@@ -109,8 +135,27 @@ validPort =
     String.toInt >> Maybe.withDefault 0 >> (<) 0
 
 
+serverName : ConnectionSetting -> String
+serverName s =
+    s.hostname ++ ":" ++ s.portStr
+
+
+type alias ErrorStatus =
+    { errorModalOpen : Bool
+    , lastErrorMessage : String
+    }
+
+
+initErrorStatus : ErrorStatus
+initErrorStatus =
+    { errorModalOpen = False
+    , lastErrorMessage = ""
+    }
+
+
 type Msg
     = OnClickLogin
+    | LoadConnections (Result JD.Error (List ConnectionSetting))
     | SaveNewConnection
     | OpenNewConnectionModal
     | CloseNewConnectionModal
@@ -120,6 +165,7 @@ type Msg
     | OnChangeConnectionPort String
     | OnChangeConnectionUsername String
     | OnChangeConnectionPassword String
+    | CloseErrorModal
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -128,18 +174,35 @@ update msg model =
         uiStatus =
             model.uiStatus
 
-        connectionSetting =
-            model.connectionSetting
+        connectionModalInput =
+            model.connectionModalInput
     in
     case msg of
         OnClickLogin ->
             ( model
-            , openConnection <| encodeConnectionSetting connectionSetting
+            , openConnection <| encodeConnectionSetting connectionModalInput
+            )
+
+        LoadConnections (Ok conns) ->
+            ( { model
+                | savedConnections = conns
+              }
+            , Cmd.none
+            )
+
+        LoadConnections (Err e) ->
+            ( { model
+                | errorStatus =
+                    { errorModalOpen = True
+                    , lastErrorMessage = JD.errorToString e
+                    }
+              }
+            , Cmd.none
             )
 
         SaveNewConnection ->
             ( model
-            , saveNewConnection <| encodeConnectionSetting connectionSetting
+            , saveNewConnection <| encodeConnectionSetting connectionModalInput
             )
 
         OpenNewConnectionModal ->
@@ -164,8 +227,8 @@ update msg model =
 
         OnChangeConnectionSystem s ->
             ( { model
-                | connectionSetting =
-                    { connectionSetting
+                | connectionModalInput =
+                    { connectionModalInput
                         | system = s
                     }
               }
@@ -174,8 +237,8 @@ update msg model =
 
         OnChangeConnectionName s ->
             ( { model
-                | connectionSetting =
-                    { connectionSetting
+                | connectionModalInput =
+                    { connectionModalInput
                         | name = s
                     }
               }
@@ -184,8 +247,8 @@ update msg model =
 
         OnChangeConnectionHostname s ->
             ( { model
-                | connectionSetting =
-                    { connectionSetting
+                | connectionModalInput =
+                    { connectionModalInput
                         | hostname = s
                     }
               }
@@ -194,8 +257,8 @@ update msg model =
 
         OnChangeConnectionPort s ->
             ( { model
-                | connectionSetting =
-                    { connectionSetting
+                | connectionModalInput =
+                    { connectionModalInput
                         | portStr = s
                     }
               }
@@ -204,8 +267,8 @@ update msg model =
 
         OnChangeConnectionUsername s ->
             ( { model
-                | connectionSetting =
-                    { connectionSetting
+                | connectionModalInput =
+                    { connectionModalInput
                         | username = s
                     }
               }
@@ -214,9 +277,23 @@ update msg model =
 
         OnChangeConnectionPassword s ->
             ( { model
-                | connectionSetting =
-                    { connectionSetting
+                | connectionModalInput =
+                    { connectionModalInput
                         | password = s
+                    }
+              }
+            , Cmd.none
+            )
+
+        CloseErrorModal ->
+            let
+                errorStatus =
+                    .errorStatus model
+            in
+            ( { model
+                | errorStatus =
+                    { errorStatus
+                        | errorModalOpen = False
                     }
               }
             , Cmd.none
@@ -225,15 +302,37 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    saveNewConnectionSuccess (\() -> CloseNewConnectionModal)
+    Sub.batch
+        [ loadConnections (JD.decodeValue connectionSettingListDecoder)
+            |> Sub.map LoadConnections
+        , saveNewConnectionSuccess (\() -> CloseNewConnectionModal)
+        ]
 
 
 view : Model -> Html Msg
 view model =
     div []
-        [ viewHeader
+        [ viewErrorModal model
+        , viewHeader
         , viewConnections model
         , viewNewConnectionModal model
+        ]
+
+
+viewErrorModal : Model -> Html Msg
+viewErrorModal model =
+    div [ class "modal", classIsActive <| model.errorStatus.errorModalOpen ]
+        [ div [ class "modal-background" ] []
+        , div [ class "modal-content" ]
+            [ article [ class "message is-danger" ]
+                [ div [ class "message-header" ]
+                    [ p [] [ text "Error" ]
+                    , button [ onClick CloseErrorModal, class "delete" ] []
+                    ]
+                , div [ class "message-body" ]
+                    [ text model.errorStatus.lastErrorMessage ]
+                ]
+            ]
         ]
 
 
@@ -250,11 +349,11 @@ viewHeader =
 
 
 viewConnections : Model -> Html Msg
-viewConnections _ =
+viewConnections model =
     section [ class "section" ]
         [ div [ class "container" ]
             [ viewConnectionsHeader
-            , viewConnectionCards
+            , viewConnectionCards model
             ]
         ]
 
@@ -276,15 +375,15 @@ viewConnectionsHeader =
         ]
 
 
-viewConnectionCards : Html Msg
-viewConnectionCards =
+viewConnectionCards : Model -> Html Msg
+viewConnectionCards model =
     div [ class "columns is-multiline" ]
-        (List.repeat 7 dummyCard)
+        (List.map buildConnectionCard model.savedConnections)
 
 
-dummyCard : Html Msg
-dummyCard =
-    viewConnectionCard "test connection" "MySQL" "127.0.0.1:3306" "root"
+buildConnectionCard : ConnectionSetting -> Html Msg
+buildConnectionCard s =
+    viewConnectionCard s.name s.system (serverName s) s.username
 
 
 viewConnectionCard : String -> String -> String -> String -> Html Msg
@@ -330,7 +429,7 @@ viewNewConnectionModal model =
                 [ button
                     [ onClick SaveNewConnection
                     , class "button is-primary"
-                    , disabled <| not <| validConnectionSetting model.connectionSetting
+                    , disabled <| not <| validConnectionSetting model.connectionModalInput
                     ]
                     [ text "OK" ]
                 , button
@@ -347,7 +446,7 @@ viewNewConnectionModalContent : Model -> Html Msg
 viewNewConnectionModalContent model =
     let
         conn =
-            model.connectionSetting
+            model.connectionModalInput
     in
     div [ class "container" ]
         [ viewHorizontalSystemSelect "System"
