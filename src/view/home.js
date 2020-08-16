@@ -23,3 +23,11 @@ app.ports.saveNewConnection.subscribe((data) => {
 ipcRenderer.on("SAVE_NEW_CONNECTION_SUCCESS", (_, args) => {
   app.ports.saveNewConnectionSuccess.send(args);
 });
+
+app.ports.removeConnection.subscribe((data) => {
+  ipcRenderer.send("REMOVE_CONNECTION", data);
+});
+
+ipcRenderer.on("REMOVE_CONNECTION_SUCCESS", (_, args) => {
+  app.ports.removeConnectionSuccess.send(args);
+});

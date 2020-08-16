@@ -20,10 +20,16 @@ port openConnection : JE.Value -> Cmd msg
 port saveNewConnection : JE.Value -> Cmd msg
 
 
+port removeConnection : JE.Value -> Cmd msg
+
+
 port loadConnections : (JD.Value -> msg) -> Sub msg
 
 
 port saveNewConnectionSuccess : (JD.Value -> msg) -> Sub msg
+
+
+port removeConnectionSuccess : (JD.Value -> msg) -> Sub msg
 
 
 main : Program () Model Msg
@@ -172,6 +178,8 @@ type Msg
     | LoadConnections (Result JD.Error (List ConnectionSetting))
     | SaveNewConnection
     | SaveNewConnectionSuccess (Result JD.Error ConnectionSetting)
+    | RemoveConnection String
+    | RemoveConnectionSuccess (Result JD.Error String)
     | OpenNewConnectionModal
     | CloseNewConnectionModal
     | OnChangeConnectionSystem String
@@ -245,6 +253,28 @@ update msg model =
                 }
 
         SaveNewConnectionSuccess (Err e) ->
+            ( { model
+                | errorStatus =
+                    { errorModalOpen = True
+                    , lastErrorMessage = JD.errorToString e
+                    }
+              }
+            , Cmd.none
+            )
+
+        RemoveConnection id ->
+            ( model
+            , removeConnection <| JE.string id
+            )
+
+        RemoveConnectionSuccess (Ok id) ->
+            ( { model
+                | connections = List.filter (\c -> c.id /= id) model.connections
+              }
+            , Cmd.none
+            )
+
+        RemoveConnectionSuccess (Err e) ->
             ( { model
                 | errorStatus =
                     { errorModalOpen = True
@@ -356,6 +386,8 @@ subscriptions _ =
             |> Sub.map LoadConnections
         , saveNewConnectionSuccess (JD.decodeValue connectionSettingDecoder)
             |> Sub.map SaveNewConnectionSuccess
+        , removeConnectionSuccess (JD.decodeValue JD.string)
+            |> Sub.map RemoveConnectionSuccess
         ]
 
 
@@ -479,7 +511,7 @@ viewConnectionCardHeader id name =
             ]
         , div [ class "level-right" ]
             [ span [ class "icon card-icon-edit" ] [ i [ class "fas fa-edit" ] [] ]
-            , span [ class "icon card-icon-danger" ] [ i [ class "fas fa-window-close" ] [] ]
+            , span [ onClick <| RemoveConnection id, class "icon card-icon-danger" ] [ i [ class "fas fa-window-close" ] [] ]
             ]
         ]
 

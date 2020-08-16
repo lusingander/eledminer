@@ -202,6 +202,12 @@ function createWindow() {
     Connections.save(newConnection);
     event.reply("SAVE_NEW_CONNECTION_SUCCESS", newConnection);
   });
+
+  ipcMain.on("REMOVE_CONNECTION", (event, args) => {
+    const id = args;
+    Connections.removeConnection(id);
+    event.reply("REMOVE_CONNECTION_SUCCESS", id);
+  });
 }
 
 app.on("activate", function() {

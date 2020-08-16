@@ -33,6 +33,13 @@ class Connections {
     const store = new Store();
     store.set("connections", connections);
   }
+
+  static removeConnection(id) {
+    const connections = Connections.load();
+    const newConnections = connections.filter((c) => c.id !== id);
+    const store = new Store();
+    store.set("connections", newConnections);
+  }
 }
 
 module.exports = {
