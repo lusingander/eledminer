@@ -523,7 +523,7 @@ systemNameAndDrivers =
     , ( "SQLite 3", "sqlite" )
     , ( "SQLite 2", "sqlite2" )
     , ( "PostgreSQL", "pgsql" )
-    , ( "Oravle (beta)", "oracle" )
+    , ( "Oracle (beta)", "oracle" )
     , ( "MS SQL (beta)", "mssql" )
     , ( "Firebird (alpha)", "firebird" )
     , ( "SimpleDB", "simpledb" )
