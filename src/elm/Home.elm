@@ -4,6 +4,8 @@ import Browser
 import Html exposing (Html, article, button, div, footer, h1, h2, header, i, input, label, option, p, section, select, span, text)
 import Html.Attributes exposing (class, disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
+import Html.Keyed
+import Html.Lazy
 import Json.Decode as JD
 import Json.Encode as JE
 import List.Extra
@@ -166,7 +168,7 @@ initErrorStatus =
 
 
 type Msg
-    = OnClickLogin
+    = OnClickLogin String
     | LoadConnections (Result JD.Error (List ConnectionSetting))
     | SaveNewConnection
     | SaveNewConnectionSuccess (Result JD.Error ConnectionSetting)
@@ -191,10 +193,26 @@ update msg model =
             model.connectionModalInput
     in
     case msg of
-        OnClickLogin ->
-            ( model
-            , openConnection <| encodeConnectionSetting connectionModalInput
-            )
+        OnClickLogin id ->
+            let
+                selected =
+                    List.Extra.find (\c -> c.id == id) model.connections
+            in
+            case selected of
+                Just conn ->
+                    ( model
+                    , openConnection <| encodeConnectionSetting <| conn
+                    )
+
+                Nothing ->
+                    ( { model
+                        | errorStatus =
+                            { errorModalOpen = True
+                            , lastErrorMessage = "Connection id is not found: =" ++ id
+                            }
+                      }
+                    , Cmd.none
+                    )
 
         LoadConnections (Ok conns) ->
             ( { model
@@ -409,24 +427,43 @@ viewConnectionsHeader =
 
 viewConnectionCards : Model -> Html Msg
 viewConnectionCards model =
-    div [ class "columns is-multiline" ]
+    Html.Keyed.node
+        "div"
+        [ class "columns is-multiline" ]
         (List.map buildConnectionCard model.connections)
 
 
-buildConnectionCard : ConnectionSetting -> Html Msg
+buildConnectionCard : ConnectionSetting -> ( String, Html Msg )
 buildConnectionCard s =
-    viewConnectionCard s.name (databaseName s) (serverName s) s.username
+    ( s.id
+    , Html.Lazy.lazy viewConnectionCard
+        { id = s.id
+        , name = s.name
+        , db = databaseName s
+        , server = serverName s
+        , user = s.username
+        }
+    )
 
 
-viewConnectionCard : String -> String -> String -> String -> Html Msg
-viewConnectionCard name system host user =
+type alias ViewConnectionCardParameter =
+    { id : String
+    , name : String
+    , db : String
+    , server : String
+    , user : String
+    }
+
+
+viewConnectionCard : ViewConnectionCardParameter -> Html Msg
+viewConnectionCard { id, name, db, server, user } =
     div [ class "column is-one-third" ]
         [ div [ class "card" ]
             [ div [ class "card-content" ]
                 [ div [ class "content is-small" ]
-                    [ viewConnectionCardHeader name
-                    , p [] [ span [ class "icon" ] [ i [ class "fas fa-database" ] [] ], text system ]
-                    , p [] [ span [ class "icon" ] [ i [ class "fas fa-network-wired" ] [] ], text host ]
+                    [ viewConnectionCardHeader id name
+                    , p [] [ span [ class "icon" ] [ i [ class "fas fa-database" ] [] ], text db ]
+                    , p [] [ span [ class "icon" ] [ i [ class "fas fa-network-wired" ] [] ], text server ]
                     , p [] [ span [ class "icon" ] [ i [ class "fas fa-user" ] [] ], text user ]
                     ]
                 ]
@@ -434,11 +471,11 @@ viewConnectionCard name system host user =
         ]
 
 
-viewConnectionCardHeader : String -> Html Msg
-viewConnectionCardHeader name =
+viewConnectionCardHeader : String -> String -> Html Msg
+viewConnectionCardHeader id name =
     div [ class "level" ]
         [ div [ class "level-left" ]
-            [ p [ class "title is-6 card-icon-title" ] [ text name ]
+            [ p [ onClick <| OnClickLogin id, class "title is-6 card-icon-title" ] [ text name ]
             ]
         , div [ class "level-right" ]
             [ span [ class "icon card-icon-edit" ] [ i [ class "fas fa-edit" ] [] ]
