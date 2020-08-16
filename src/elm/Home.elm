@@ -11,6 +11,12 @@ import Json.Encode as JE
 port openConnection : JE.Value -> Cmd msg
 
 
+port saveNewConnection : JE.Value -> Cmd msg
+
+
+port saveNewConnectionSuccess : (() -> msg) -> Sub msg
+
+
 main : Program () Model Msg
 main =
     Browser.element
@@ -77,6 +83,7 @@ encodeConnectionSetting : ConnectionSetting -> JE.Value
 encodeConnectionSetting s =
     JE.object
         [ ( "driver", JE.string s.system )
+        , ( "name", JE.string s.name )
         , ( "hostname", JE.string s.hostname )
         , ( "port", JE.string s.portStr )
         , ( "username", JE.string s.username )
@@ -104,6 +111,7 @@ validPort =
 
 type Msg
     = OnClickLogin
+    | SaveNewConnection
     | OpenNewConnectionModal
     | CloseNewConnectionModal
     | OnChangeConnectionSystem String
@@ -127,6 +135,11 @@ update msg model =
         OnClickLogin ->
             ( model
             , openConnection <| encodeConnectionSetting connectionSetting
+            )
+
+        SaveNewConnection ->
+            ( model
+            , saveNewConnection <| encodeConnectionSetting connectionSetting
             )
 
         OpenNewConnectionModal ->
@@ -212,7 +225,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    saveNewConnectionSuccess (\() -> CloseNewConnectionModal)
 
 
 view : Model -> Html Msg
@@ -315,7 +328,7 @@ viewNewConnectionModal model =
                 ]
             , footer [ class "modal-card-foot" ]
                 [ button
-                    [ onClick OnClickLogin
+                    [ onClick SaveNewConnection
                     , class "button is-primary"
                     , disabled <| not <| validConnectionSetting model.connectionSetting
                     ]

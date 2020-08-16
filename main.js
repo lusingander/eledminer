@@ -1,5 +1,5 @@
 const { app, BrowserWindow, BrowserView, ipcMain } = require("electron");
-const UserSettings = require("./src/store");
+const { UserSettings, Connections } = require("./src/store");
 const PHPServer = require("php-server-manager");
 const { loginAndGetConnectionInfo } = require("./src/adminer");
 
@@ -181,6 +181,19 @@ function createWindow() {
       // dont want to open adminer view if not 200... (return 403 if parmaeter is invalid)
       .then(() => openAdminerView())
       .catch((err) => console.log(`failed connecting database: ${err}`));
+  });
+
+  ipcMain.on("SAVE_NEW_CONNECTION", (event, args) => {
+    Connections.save({
+      type: "default",
+      driver: args.driver,
+      name: args.name,
+      hostname: args.hostname,
+      port: args.port,
+      username: args.username,
+      password: args.password,
+    });
+    event.reply("SAVE_NEW_CONNECTION_SUCCESS");
   });
 }
 

@@ -1,6 +1,6 @@
 const Store = require("electron-store");
 
-module.exports = class UserSettings {
+class UserSettings {
   static load() {
     const store = new Store();
     return new UserSettings({
@@ -19,4 +19,23 @@ module.exports = class UserSettings {
     this.port = params.port;
     this.theme = params.theme;
   }
+}
+
+class Connections {
+  static load() {
+    const store = new Store();
+    return store.get("connections", []);
+  }
+
+  static save(conn) {
+    const connections = Connections.load();
+    connections.push(conn);
+    const store = new Store();
+    store.set("connections", connections);
+  }
+}
+
+module.exports = {
+  UserSettings: UserSettings,
+  Connections: Connections,
 };
