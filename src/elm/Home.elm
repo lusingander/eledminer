@@ -6,6 +6,7 @@ import Html.Attributes exposing (class, disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import Json.Encode as JE
+import List.Extra
 
 
 port loaded : () -> Cmd msg
@@ -138,6 +139,13 @@ validPort =
 serverName : ConnectionSetting -> String
 serverName s =
     s.hostname ++ ":" ++ s.portStr
+
+
+databaseName : ConnectionSetting -> String
+databaseName s =
+    List.Extra.find (\( _, v ) -> v == s.system) systemNameAndDrivers
+        |> Maybe.map (\( v, _ ) -> v)
+        |> Maybe.withDefault ""
 
 
 type alias ErrorStatus =
@@ -403,7 +411,7 @@ viewConnectionCards model =
 
 buildConnectionCard : ConnectionSetting -> Html Msg
 buildConnectionCard s =
-    viewConnectionCard s.name s.system (serverName s) s.username
+    viewConnectionCard s.name (databaseName s) (serverName s) s.username
 
 
 viewConnectionCard : String -> String -> String -> String -> Html Msg
