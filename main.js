@@ -136,8 +136,6 @@ function createWindow() {
     if (args.restart) {
       app.relaunch();
       app.exit();
-    } else {
-      event.reply("SETTINGS_SAVE_SUCCESS");
     }
   });
 

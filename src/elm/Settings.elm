@@ -25,9 +25,6 @@ port postpone : JE.Value -> Cmd msg
 port loadSettings : (JD.Value -> msg) -> Sub msg
 
 
-port settingsSaveSuccess : (() -> msg) -> Sub msg
-
-
 main : Program () Model Msg
 main =
     Browser.element
@@ -153,7 +150,6 @@ type Msg
     | ConfirmRestart
     | ConfirmPostpone
     | LoadSettings (Result JD.Error UserSettings)
-    | SettingsSaveSuccess ()
     | OnInputPort String
     | OnChangeTheme String
     | HideNotification
@@ -231,11 +227,6 @@ update msg model =
             , Cmd.none
             )
 
-        SettingsSaveSuccess _ ->
-            ( model
-            , Cmd.none
-            )
-
         OnInputPort s ->
             let
                 settings =
@@ -302,11 +293,8 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.batch
-        [ loadSettings (JD.decodeValue userSettingsDecoder)
-            |> Sub.map LoadSettings
-        , settingsSaveSuccess SettingsSaveSuccess
-        ]
+    loadSettings (JD.decodeValue userSettingsDecoder)
+        |> Sub.map LoadSettings
 
 
 view : Model -> Html Msg

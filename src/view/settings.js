@@ -29,7 +29,3 @@ app.ports.postpone.subscribe(function(data) {
     restart: false,
   });
 });
-
-ipcRenderer.on("SETTINGS_SAVE_SUCCESS", () => {
-  app.ports.settingsSaveSuccess.send();
-});
