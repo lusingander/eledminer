@@ -29,7 +29,7 @@ class Connections {
 
   static save(conn) {
     const connections = Connections.load();
-    connections.push(conn);
+    connections.unshift(conn);
     const store = new Store();
     store.set("connections", connections);
   }

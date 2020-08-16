@@ -188,7 +188,7 @@ function createWindow() {
   });
 
   ipcMain.on("SAVE_NEW_CONNECTION", (event, args) => {
-    Connections.save({
+    const newConnection = {
       type: "default",
       driver: args.driver,
       name: args.name,
@@ -196,8 +196,9 @@ function createWindow() {
       port: args.port,
       username: args.username,
       password: args.password,
-    });
-    event.reply("SAVE_NEW_CONNECTION_SUCCESS");
+    };
+    Connections.save(newConnection);
+    event.reply("SAVE_NEW_CONNECTION_SUCCESS", newConnection);
   });
 }
 

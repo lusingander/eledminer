@@ -20,7 +20,7 @@ port saveNewConnection : JE.Value -> Cmd msg
 port loadConnections : (JD.Value -> msg) -> Sub msg
 
 
-port saveNewConnectionSuccess : (() -> msg) -> Sub msg
+port saveNewConnectionSuccess : (JD.Value -> msg) -> Sub msg
 
 
 main : Program () Model Msg
@@ -157,6 +157,7 @@ type Msg
     = OnClickLogin
     | LoadConnections (Result JD.Error (List ConnectionSetting))
     | SaveNewConnection
+    | SaveNewConnectionSuccess (Result JD.Error ConnectionSetting)
     | OpenNewConnectionModal
     | CloseNewConnectionModal
     | OnChangeConnectionSystem String
@@ -203,6 +204,23 @@ update msg model =
         SaveNewConnection ->
             ( model
             , saveNewConnection <| encodeConnectionSetting connectionModalInput
+            )
+
+        SaveNewConnectionSuccess (Ok conn) ->
+            update
+                CloseNewConnectionModal
+                { model
+                    | savedConnections = conn :: model.savedConnections
+                }
+
+        SaveNewConnectionSuccess (Err e) ->
+            ( { model
+                | errorStatus =
+                    { errorModalOpen = True
+                    , lastErrorMessage = JD.errorToString e
+                    }
+              }
+            , Cmd.none
             )
 
         OpenNewConnectionModal ->
@@ -305,7 +323,8 @@ subscriptions _ =
     Sub.batch
         [ loadConnections (JD.decodeValue connectionSettingListDecoder)
             |> Sub.map LoadConnections
-        , saveNewConnectionSuccess (\() -> CloseNewConnectionModal)
+        , saveNewConnectionSuccess (JD.decodeValue connectionSettingDecoder)
+            |> Sub.map SaveNewConnectionSuccess
         ]
 
 

@@ -20,6 +20,6 @@ app.ports.saveNewConnection.subscribe((data) => {
   ipcRenderer.send("SAVE_NEW_CONNECTION", data);
 });
 
-ipcRenderer.on("SAVE_NEW_CONNECTION_SUCCESS", () => {
-  app.ports.saveNewConnectionSuccess.send(null);
+ipcRenderer.on("SAVE_NEW_CONNECTION_SUCCESS", (_, args) => {
+  app.ports.saveNewConnectionSuccess.send(args);
 });
