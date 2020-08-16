@@ -70,7 +70,8 @@ initUIStatus =
 
 
 type alias ConnectionSetting =
-    { system : String
+    { id : String
+    , system : String
     , name : String
     , hostname : String
     , portStr : String
@@ -81,7 +82,8 @@ type alias ConnectionSetting =
 
 initConnectionSetting : ConnectionSetting
 initConnectionSetting =
-    { system = "server"
+    { id = ""
+    , system = "server"
     , name = ""
     , hostname = ""
     , portStr = ""
@@ -97,7 +99,8 @@ connectionSettingListDecoder =
 
 connectionSettingDecoder : JD.Decoder ConnectionSetting
 connectionSettingDecoder =
-    JD.map6 ConnectionSetting
+    JD.map7 ConnectionSetting
+        (JD.field "id" JD.string)
         (JD.field "driver" JD.string)
         (JD.field "name" JD.string)
         (JD.field "hostname" JD.string)
@@ -109,7 +112,8 @@ connectionSettingDecoder =
 encodeConnectionSetting : ConnectionSetting -> JE.Value
 encodeConnectionSetting s =
     JE.object
-        [ ( "driver", JE.string s.system )
+        [ ( "id", JE.string s.id )
+        , ( "driver", JE.string s.system )
         , ( "name", JE.string s.name )
         , ( "hostname", JE.string s.hostname )
         , ( "port", JE.string s.portStr )

@@ -2,6 +2,7 @@ const { app, BrowserWindow, BrowserView, ipcMain } = require("electron");
 const { UserSettings, Connections } = require("./src/store");
 const PHPServer = require("php-server-manager");
 const { loginAndGetConnectionInfo } = require("./src/adminer");
+const { v4: uuid } = require("uuid");
 
 const userSettings = UserSettings.load();
 const server = new PHPServer({
@@ -190,6 +191,7 @@ function createWindow() {
   ipcMain.on("SAVE_NEW_CONNECTION", (event, args) => {
     const newConnection = {
       type: "default",
+      id: uuid(), // Generate in Elm...
       driver: args.driver,
       name: args.name,
       hostname: args.hostname,
