@@ -35,7 +35,7 @@ main =
 
 
 type alias Model =
-    { savedConnections : List ConnectionSetting
+    { connections : List ConnectionSetting
     , uiStatus : UIStatus
     , connectionModalInput : ConnectionSetting
     , errorStatus : ErrorStatus
@@ -51,7 +51,7 @@ init _ =
 
 initModel : Model
 initModel =
-    { savedConnections = []
+    { connections = []
     , uiStatus = initUIStatus
     , connectionModalInput = initConnectionSetting
     , errorStatus = initErrorStatus
@@ -194,7 +194,7 @@ update msg model =
 
         LoadConnections (Ok conns) ->
             ( { model
-                | savedConnections = conns
+                | connections = conns
               }
             , Cmd.none
             )
@@ -218,7 +218,7 @@ update msg model =
             update
                 CloseNewConnectionModal
                 { model
-                    | savedConnections = conn :: model.savedConnections
+                    | connections = conn :: model.connections
                     , connectionModalInput = initConnectionSetting
                 }
 
@@ -406,7 +406,7 @@ viewConnectionsHeader =
 viewConnectionCards : Model -> Html Msg
 viewConnectionCards model =
     div [ class "columns is-multiline" ]
-        (List.map buildConnectionCard model.savedConnections)
+        (List.map buildConnectionCard model.connections)
 
 
 buildConnectionCard : ConnectionSetting -> Html Msg
