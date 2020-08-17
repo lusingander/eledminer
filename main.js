@@ -208,6 +208,11 @@ function createWindow() {
     Connections.removeConnection(id);
     event.reply("REMOVE_CONNECTION_SUCCESS", id);
   });
+
+  ipcMain.on("OPEN_ADMINER_HOME", () => {
+    mainView.webContents.loadURL(baseUrl);
+    openAdminerView();
+  });
 }
 
 app.on("activate", function() {

@@ -31,3 +31,7 @@ app.ports.removeConnection.subscribe((data) => {
 ipcRenderer.on("REMOVE_CONNECTION_SUCCESS", (_, args) => {
   app.ports.removeConnectionSuccess.send(args);
 });
+
+app.ports.openAdminerHome.subscribe((data) => {
+  ipcRenderer.send("OPEN_ADMINER_HOME", data);
+});

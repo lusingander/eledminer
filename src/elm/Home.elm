@@ -1,7 +1,7 @@
 port module Home exposing (main)
 
 import Browser
-import Html exposing (Html, article, button, div, footer, h1, h2, header, i, input, label, option, p, section, select, span, text)
+import Html exposing (Html, a, article, button, div, footer, h1, h2, header, i, input, label, option, p, section, select, span, text)
 import Html.Attributes exposing (class, disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Keyed
@@ -21,6 +21,9 @@ port saveNewConnection : JE.Value -> Cmd msg
 
 
 port removeConnection : JE.Value -> Cmd msg
+
+
+port openAdminerHome : () -> Cmd msg
 
 
 port loadConnections : (JD.Value -> msg) -> Sub msg
@@ -184,6 +187,7 @@ type Msg
     | SaveNewConnectionSuccess (Result JD.Error ConnectionSetting)
     | RemoveConnection String
     | RemoveConnectionSuccess (Result JD.Error String)
+    | OpenAdminerHome
     | OpenNewConnectionModal
     | CloseNewConnectionModal
     | OpenConfirmRemoveConnectionModal ( String, String )
@@ -288,6 +292,11 @@ update msg model =
                     }
               }
             , Cmd.none
+            )
+
+        OpenAdminerHome ->
+            ( model
+            , openAdminerHome ()
             )
 
         OpenNewConnectionModal ->
@@ -429,6 +438,7 @@ viewContents : Model -> List (Html Msg)
 viewContents model =
     [ viewHeader
     , viewConnections model
+    , viewFooter
     ]
 
 
@@ -712,4 +722,12 @@ viewConfirmRemoveConnectionModal model =
                 , button [ onClick CloseConfirmRemoveConnectionModal, class "button is-light" ] [ text "Cancel" ]
                 ]
             ]
+        ]
+
+
+viewFooter : Html Msg
+viewFooter =
+    div [ class "container" ]
+        [ div [ class "is-pulled-right" ]
+            [ a [ onClick OpenAdminerHome ] [ text "Adminer home" ] ]
         ]
