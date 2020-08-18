@@ -16,6 +16,10 @@ app.ports.openConnection.subscribe((data) => {
   ipcRenderer.send("OPEN_CONNECTION", data);
 });
 
+ipcRenderer.on("OPEN_CONNECTION_SUCCESS", () => {
+  app.ports.openConnectionSuccess.send(null);
+});
+
 app.ports.saveNewConnection.subscribe((data) => {
   ipcRenderer.send("SAVE_NEW_CONNECTION", data);
 });

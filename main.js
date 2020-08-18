@@ -185,7 +185,8 @@ function createWindow() {
       )
       // dont want to open adminer view if not 200... (return 403 if parmaeter is invalid)
       .then(() => openAdminerView())
-      .catch((err) => console.log(`failed connecting database: ${err}`));
+      .catch((err) => console.log(`failed connecting database: ${err}`))
+      .finally(() => event.reply("OPEN_CONNECTION_SUCCESS"));
   });
 
   ipcMain.on("SAVE_NEW_CONNECTION", (event, args) => {

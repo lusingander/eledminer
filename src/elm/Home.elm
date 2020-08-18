@@ -26,6 +26,9 @@ port removeConnection : JE.Value -> Cmd msg
 port openAdminerHome : () -> Cmd msg
 
 
+port openConnectionSuccess : (() -> msg) -> Sub msg
+
+
 port loadConnections : (JD.Value -> msg) -> Sub msg
 
 
@@ -73,6 +76,7 @@ type alias UIStatus =
     { newConenctionModalOpen : Bool
     , confirmRemoveConnectionModalOpen : Bool
     , confirmRemoveConnectionModalTarget : ( String, String )
+    , loaderActive : Bool
     }
 
 
@@ -81,6 +85,7 @@ initUIStatus =
     { newConenctionModalOpen = False
     , confirmRemoveConnectionModalOpen = False
     , confirmRemoveConnectionModalTarget = ( "", "" )
+    , loaderActive = False
     }
 
 
@@ -182,6 +187,7 @@ initErrorStatus =
 
 type Msg
     = OnClickLogin String
+    | OpenConnectionSuccess
     | LoadConnections (Result JD.Error (List ConnectionSetting))
     | SaveNewConnection
     | SaveNewConnectionSuccess (Result JD.Error ConnectionSetting)
@@ -218,7 +224,12 @@ update msg model =
             in
             case selected of
                 Just conn ->
-                    ( model
+                    ( { model
+                        | uiStatus =
+                            { uiStatus
+                                | loaderActive = True
+                            }
+                      }
                     , openConnection <| encodeConnectionSetting <| conn
                     )
 
@@ -231,6 +242,16 @@ update msg model =
                       }
                     , Cmd.none
                     )
+
+        OpenConnectionSuccess ->
+            ( { model
+                | uiStatus =
+                    { uiStatus
+                        | loaderActive = False
+                    }
+              }
+            , Cmd.none
+            )
 
         LoadConnections (Ok conns) ->
             ( { model
@@ -419,7 +440,8 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ loadConnections (JD.decodeValue connectionSettingListDecoder)
+        [ openConnectionSuccess (\_ -> OpenConnectionSuccess)
+        , loadConnections (JD.decodeValue connectionSettingListDecoder)
             |> Sub.map LoadConnections
         , saveNewConnectionSuccess (JD.decodeValue connectionSettingDecoder)
             |> Sub.map SaveNewConnectionSuccess
@@ -447,6 +469,7 @@ viewModals model =
     [ viewErrorModal model
     , viewNewConnectionModal model
     , viewConfirmRemoveConnectionModal model
+    , viewLoader model
     ]
 
 
@@ -731,3 +754,9 @@ viewFooter =
         [ div [ class "is-pulled-right" ]
             [ a [ onClick OpenAdminerHome ] [ text "Adminer home" ] ]
         ]
+
+
+viewLoader : Model -> Html Msg
+viewLoader model =
+    div [ class "loader-wrapper", classIsActive model.uiStatus.loaderActive ]
+        [ div [ class "loader is-loading" ] [] ]
