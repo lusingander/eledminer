@@ -245,12 +245,7 @@ update msg model =
                     )
 
                 Nothing ->
-                    ( { model
-                        | errorStatus =
-                            { errorModalOpen = True
-                            , lastErrorMessage = "Connection id is not found: =" ++ id
-                            }
-                      }
+                    ( showErrorDialog ("Connection id is not found: =" ++ id) model
                     , Cmd.none
                     )
 
@@ -272,12 +267,7 @@ update msg model =
             )
 
         LoadConnections (Err e) ->
-            ( { model
-                | errorStatus =
-                    { errorModalOpen = True
-                    , lastErrorMessage = JD.errorToString e
-                    }
-              }
+            ( showErrorDialog (JD.errorToString e) model
             , Cmd.none
             )
 
@@ -295,12 +285,7 @@ update msg model =
                 }
 
         SaveNewConnectionSuccess (Err e) ->
-            ( { model
-                | errorStatus =
-                    { errorModalOpen = True
-                    , lastErrorMessage = JD.errorToString e
-                    }
-              }
+            ( showErrorDialog (JD.errorToString e) model
             , Cmd.none
             )
 
@@ -318,12 +303,7 @@ update msg model =
                 }
 
         SaveEditConnectionSuccess (Err e) ->
-            ( { model
-                | errorStatus =
-                    { errorModalOpen = True
-                    , lastErrorMessage = JD.errorToString e
-                    }
-              }
+            ( showErrorDialog (JD.errorToString e) model
             , Cmd.none
             )
 
@@ -340,12 +320,7 @@ update msg model =
                 }
 
         RemoveConnectionSuccess (Err e) ->
-            ( { model
-                | errorStatus =
-                    { errorModalOpen = True
-                    , lastErrorMessage = JD.errorToString e
-                    }
-              }
+            ( showErrorDialog (JD.errorToString e) model
             , Cmd.none
             )
 
@@ -493,6 +468,16 @@ update msg model =
               }
             , Cmd.none
             )
+
+
+showErrorDialog : String -> Model -> Model
+showErrorDialog message model =
+    { model
+        | errorStatus =
+            { errorModalOpen = True
+            , lastErrorMessage = message
+            }
+    }
 
 
 subscriptions : Model -> Sub Msg
