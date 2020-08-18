@@ -245,7 +245,7 @@ update msg model =
                     )
 
                 Nothing ->
-                    ( showErrorDialog ("Connection id is not found: =" ++ id) model
+                    ( showErrorModal ("Connection id is not found: =" ++ id) model
                     , Cmd.none
                     )
 
@@ -267,7 +267,7 @@ update msg model =
             )
 
         LoadConnections (Err e) ->
-            ( showErrorDialog (JD.errorToString e) model
+            ( showErrorModal (JD.errorToString e) model
             , Cmd.none
             )
 
@@ -285,7 +285,7 @@ update msg model =
                 }
 
         SaveNewConnectionSuccess (Err e) ->
-            ( showErrorDialog (JD.errorToString e) model
+            ( showErrorModal (JD.errorToString e) model
             , Cmd.none
             )
 
@@ -303,7 +303,7 @@ update msg model =
                 }
 
         SaveEditConnectionSuccess (Err e) ->
-            ( showErrorDialog (JD.errorToString e) model
+            ( showErrorModal (JD.errorToString e) model
             , Cmd.none
             )
 
@@ -320,7 +320,7 @@ update msg model =
                 }
 
         RemoveConnectionSuccess (Err e) ->
-            ( showErrorDialog (JD.errorToString e) model
+            ( showErrorModal (JD.errorToString e) model
             , Cmd.none
             )
 
@@ -456,26 +456,27 @@ update msg model =
             )
 
         CloseErrorModal ->
-            let
-                errorStatus =
-                    .errorStatus model
-            in
-            ( { model
-                | errorStatus =
-                    { errorStatus
-                        | errorModalOpen = False
-                    }
-              }
+            ( closeErrorModal model
             , Cmd.none
             )
 
 
-showErrorDialog : String -> Model -> Model
-showErrorDialog message model =
+showErrorModal : String -> Model -> Model
+showErrorModal message model =
     { model
         | errorStatus =
             { errorModalOpen = True
             , lastErrorMessage = message
+            }
+    }
+
+
+closeErrorModal : Model -> Model
+closeErrorModal model =
+    { model
+        | errorStatus =
+            { errorModalOpen = False
+            , lastErrorMessage = model.errorStatus.lastErrorMessage
             }
     }
 
