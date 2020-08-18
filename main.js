@@ -204,6 +204,21 @@ function createWindow() {
     event.reply("SAVE_NEW_CONNECTION_SUCCESS", newConnection);
   });
 
+  ipcMain.on("SAVE_EDIT_CONNECTION", (event, args) => {
+    const newConnection = {
+      type: "default",
+      id: args.id,
+      driver: args.driver,
+      name: args.name,
+      hostname: args.hostname,
+      port: args.port,
+      username: args.username,
+      password: args.password,
+    };
+    Connections.update(newConnection);
+    event.reply("SAVE_EDIT_CONNECTION_SUCCESS", newConnection);
+  });
+
   ipcMain.on("REMOVE_CONNECTION", (event, args) => {
     const id = args;
     Connections.removeConnection(id);

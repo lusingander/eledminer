@@ -28,6 +28,14 @@ ipcRenderer.on("SAVE_NEW_CONNECTION_SUCCESS", (_, args) => {
   app.ports.saveNewConnectionSuccess.send(args);
 });
 
+app.ports.saveEditConnection.subscribe((data) => {
+  ipcRenderer.send("SAVE_EDIT_CONNECTION", data);
+});
+
+ipcRenderer.on("SAVE_EDIT_CONNECTION_SUCCESS", (_, args) => {
+  app.ports.saveEditConnectionSuccess.send(args);
+});
+
 app.ports.removeConnection.subscribe((data) => {
   ipcRenderer.send("REMOVE_CONNECTION", data);
 });

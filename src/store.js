@@ -34,6 +34,15 @@ class Connections {
     store.set("connections", connections);
   }
 
+  static update(conn) {
+    const connections = Connections.load();
+    const newConenctions = connections.map((c) =>
+      c.id === conn.id ? conn : c
+    );
+    const store = new Store();
+    store.set("connections", newConenctions);
+  }
+
   static removeConnection(id) {
     const connections = Connections.load();
     const newConnections = connections.filter((c) => c.id !== id);

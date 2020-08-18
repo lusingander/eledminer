@@ -20,6 +20,9 @@ port openConnection : JE.Value -> Cmd msg
 port saveNewConnection : JE.Value -> Cmd msg
 
 
+port saveEditConnection : JE.Value -> Cmd msg
+
+
 port removeConnection : JE.Value -> Cmd msg
 
 
@@ -33,6 +36,9 @@ port loadConnections : (JD.Value -> msg) -> Sub msg
 
 
 port saveNewConnectionSuccess : (JD.Value -> msg) -> Sub msg
+
+
+port saveEditConnectionSuccess : (JD.Value -> msg) -> Sub msg
 
 
 port removeConnectionSuccess : (JD.Value -> msg) -> Sub msg
@@ -73,7 +79,8 @@ initModel =
 
 
 type alias UIStatus =
-    { newConenctionModalOpen : Bool
+    { conenctionModalOpen : Bool
+    , isNewConnectionModal : Bool
     , confirmRemoveConnectionModalOpen : Bool
     , confirmRemoveConnectionModalTarget : ( String, String )
     , loaderActive : Bool
@@ -82,7 +89,8 @@ type alias UIStatus =
 
 initUIStatus : UIStatus
 initUIStatus =
-    { newConenctionModalOpen = False
+    { conenctionModalOpen = False
+    , isNewConnectionModal = True
     , confirmRemoveConnectionModalOpen = False
     , confirmRemoveConnectionModalTarget = ( "", "" )
     , loaderActive = False
@@ -191,11 +199,14 @@ type Msg
     | LoadConnections (Result JD.Error (List ConnectionSetting))
     | SaveNewConnection
     | SaveNewConnectionSuccess (Result JD.Error ConnectionSetting)
+    | SaveEditConnection
+    | SaveEditConnectionSuccess (Result JD.Error ConnectionSetting)
     | RemoveConnection String
     | RemoveConnectionSuccess (Result JD.Error String)
     | OpenAdminerHome
     | OpenNewConnectionModal
-    | CloseNewConnectionModal
+    | OpenEditConnectionModal String
+    | CloseConnectionModal
     | OpenConfirmRemoveConnectionModal ( String, String )
     | CloseConfirmRemoveConnectionModal
     | OnChangeConnectionSystem String
@@ -277,13 +288,36 @@ update msg model =
 
         SaveNewConnectionSuccess (Ok conn) ->
             update
-                CloseNewConnectionModal
+                CloseConnectionModal
                 { model
                     | connections = conn :: model.connections
                     , connectionModalInput = initConnectionSetting
                 }
 
         SaveNewConnectionSuccess (Err e) ->
+            ( { model
+                | errorStatus =
+                    { errorModalOpen = True
+                    , lastErrorMessage = JD.errorToString e
+                    }
+              }
+            , Cmd.none
+            )
+
+        SaveEditConnection ->
+            ( model
+            , saveEditConnection <| encodeConnectionSetting connectionModalInput
+            )
+
+        SaveEditConnectionSuccess (Ok conn) ->
+            update
+                CloseConnectionModal
+                { model
+                    | connections = List.Extra.updateIf (\c -> c.id == conn.id) (\_ -> conn) model.connections
+                    , connectionModalInput = initConnectionSetting
+                }
+
+        SaveEditConnectionSuccess (Err e) ->
             ( { model
                 | errorStatus =
                     { errorModalOpen = True
@@ -321,20 +355,44 @@ update msg model =
             )
 
         OpenNewConnectionModal ->
+            let
+                newConnectionModalInput =
+                    if uiStatus.isNewConnectionModal then
+                        model.connectionModalInput
+
+                    else
+                        initConnectionSetting
+            in
             ( { model
                 | uiStatus =
                     { uiStatus
-                        | newConenctionModalOpen = True
+                        | conenctionModalOpen = True
+                        , isNewConnectionModal = True
                     }
+                , connectionModalInput = newConnectionModalInput
               }
             , Cmd.none
             )
 
-        CloseNewConnectionModal ->
+        OpenEditConnectionModal id ->
             ( { model
                 | uiStatus =
                     { uiStatus
-                        | newConenctionModalOpen = False
+                        | conenctionModalOpen = True
+                        , isNewConnectionModal = False
+                    }
+                , connectionModalInput =
+                    List.Extra.find (\c -> c.id == id) model.connections
+                        |> Maybe.withDefault initConnectionSetting
+              }
+            , Cmd.none
+            )
+
+        CloseConnectionModal ->
+            ( { model
+                | uiStatus =
+                    { uiStatus
+                        | conenctionModalOpen = False
                     }
               }
             , Cmd.none
@@ -445,6 +503,8 @@ subscriptions _ =
             |> Sub.map LoadConnections
         , saveNewConnectionSuccess (JD.decodeValue connectionSettingDecoder)
             |> Sub.map SaveNewConnectionSuccess
+        , saveEditConnectionSuccess (JD.decodeValue connectionSettingDecoder)
+            |> Sub.map SaveEditConnectionSuccess
         , removeConnectionSuccess (JD.decodeValue JD.string)
             |> Sub.map RemoveConnectionSuccess
         ]
@@ -467,7 +527,7 @@ viewContents model =
 viewModals : Model -> List (Html Msg)
 viewModals model =
     [ viewErrorModal model
-    , viewNewConnectionModal model
+    , viewConnectionModal model
     , viewConfirmRemoveConnectionModal model
     , viewLoader model
     ]
@@ -582,31 +642,40 @@ viewConnectionCardHeader id name =
             [ p [ onClick <| OnClickLogin id, class "title is-6 card-icon-title" ] [ text name ]
             ]
         , div [ class "level-right" ]
-            [ span [ class "icon card-icon-edit" ] [ i [ class "fas fa-edit" ] [] ]
+            [ span [ onClick <| OpenEditConnectionModal id, class "icon card-icon-edit" ] [ i [ class "fas fa-edit" ] [] ]
             , span [ onClick <| OpenConfirmRemoveConnectionModal ( id, name ), class "icon card-icon-danger" ] [ i [ class "fas fa-window-close" ] [] ]
             ]
         ]
 
 
-viewNewConnectionModal : Model -> Html Msg
-viewNewConnectionModal model =
-    div [ class "modal", classIsActive <| model.uiStatus.newConenctionModalOpen ]
+viewConnectionModal : Model -> Html Msg
+viewConnectionModal model =
+    if model.uiStatus.isNewConnectionModal then
+        viewConnectionModalBase "New Connection" SaveNewConnection model
+
+    else
+        viewConnectionModalBase "Edit Connection" SaveEditConnection model
+
+
+viewConnectionModalBase : String -> Msg -> Model -> Html Msg
+viewConnectionModalBase title ok model =
+    div [ class "modal", classIsActive <| model.uiStatus.conenctionModalOpen ]
         [ div [ class "modal-background" ] []
         , div [ class "modal-content" ]
             [ header [ class "modal-card-head" ]
-                [ p [ class "modal-card-title" ] [ text "New Connection" ] ]
+                [ p [ class "modal-card-title" ] [ text title ] ]
             , section [ class "modal-card-body" ]
                 [ viewNewConnectionModalContent model
                 ]
             , footer [ class "modal-card-foot" ]
                 [ button
-                    [ onClick SaveNewConnection
+                    [ onClick ok
                     , class "button is-primary"
                     , disabled <| not <| validConnectionSetting model.connectionModalInput
                     ]
                     [ text "OK" ]
                 , button
-                    [ onClick CloseNewConnectionModal
+                    [ onClick CloseConnectionModal
                     , class "button is-light"
                     ]
                     [ text "Cancel" ]
@@ -622,7 +691,7 @@ viewNewConnectionModalContent model =
             model.connectionModalInput
     in
     div [ class "container" ]
-        [ viewHorizontalSystemSelect "System"
+        [ viewHorizontalSystemSelect "System" conn.system
         , viewHorizontalTextInputField "Connection Name" conn.name OnChangeConnectionName
         , viewHorizontalTextInputField "Hostname" conn.hostname OnChangeConnectionHostname
         , viewHorizontalNumberInputField "Port" conn.portStr OnChangeConnectionPort
@@ -631,13 +700,13 @@ viewNewConnectionModalContent model =
         ]
 
 
-viewHorizontalSystemSelect : String -> Html Msg
-viewHorizontalSystemSelect labelText =
-    viewHorizontalComponent labelText [ viewSystemSelect ]
+viewHorizontalSystemSelect : String -> String -> Html Msg
+viewHorizontalSystemSelect labelText inputValue =
+    viewHorizontalComponent labelText [ viewSystemSelect inputValue ]
 
 
-viewSystemSelect : Html Msg
-viewSystemSelect =
+viewSystemSelect : String -> Html Msg
+viewSystemSelect inputValue =
     let
         handler selected =
             OnChangeConnectionSystem selected
@@ -645,6 +714,7 @@ viewSystemSelect =
     div [ class "select is-small" ]
         [ select
             [ onChange handler
+            , value inputValue
             ]
             (List.map
                 (\( n, v ) -> option [ value v ] [ text n ])
