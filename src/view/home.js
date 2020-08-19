@@ -20,6 +20,10 @@ ipcRenderer.on("OPEN_CONNECTION_SUCCESS", () => {
   app.ports.openConnectionSuccess.send(null);
 });
 
+ipcRenderer.on("OPEN_CONNECTION_FAILURE", () => {
+  app.ports.openConnectionFailure.send(null);
+});
+
 app.ports.saveNewConnection.subscribe((data) => {
   ipcRenderer.send("SAVE_NEW_CONNECTION", data);
 });

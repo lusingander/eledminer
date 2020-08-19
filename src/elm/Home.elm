@@ -32,6 +32,9 @@ port openAdminerHome : () -> Cmd msg
 port openConnectionSuccess : (() -> msg) -> Sub msg
 
 
+port openConnectionFailure : (() -> msg) -> Sub msg
+
+
 port loadConnections : (JD.Value -> msg) -> Sub msg
 
 
@@ -196,6 +199,7 @@ initErrorStatus =
 type Msg
     = OnClickLogin String
     | OpenConnectionSuccess
+    | OpenConnectionFailure
     | LoadConnections (Result JD.Error (List ConnectionSetting))
     | SaveNewConnection
     | SaveNewConnectionSuccess (Result JD.Error ConnectionSetting)
@@ -256,6 +260,11 @@ update msg model =
                         | loaderActive = False
                     }
               }
+            , Cmd.none
+            )
+
+        OpenConnectionFailure ->
+            ( showErrorModal "Failed to connect" model
             , Cmd.none
             )
 
@@ -485,6 +494,7 @@ subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ openConnectionSuccess (\_ -> OpenConnectionSuccess)
+        , openConnectionFailure (\_ -> OpenConnectionFailure)
         , loadConnections (JD.decodeValue connectionSettingListDecoder)
             |> Sub.map LoadConnections
         , saveNewConnectionSuccess (JD.decodeValue connectionSettingDecoder)

@@ -1,6 +1,6 @@
 const request = require("request");
 
-exports.loginAndGetConnectionInfo = (args) => {
+const loginAndGetConnectionInfo = (args) => {
   return new Promise((resolve, reject) => {
     const baseUrl = args.baseUrl;
     const driver = args.driver;
@@ -37,4 +37,33 @@ exports.loginAndGetConnectionInfo = (args) => {
       });
     });
   });
+};
+
+const checkConnection = (conn) => {
+  return new Promise((resolve, reject) => {
+    const cookie = request.cookie(`${conn.cookie.name}=${conn.cookie.value}`);
+    const headers = {
+      Cookie: cookie,
+    };
+    const options = {
+      url: conn.redirectUrl,
+      method: "GET",
+      headers: headers,
+    };
+    request(options, (error, response, body) => {
+      if (error) {
+        return reject(error);
+      }
+      const statusCode = response["statusCode"];
+      if (statusCode !== 200) {
+        return reject();
+      }
+      resolve(conn);
+    });
+  });
+};
+
+module.exports = {
+  loginAndGetConnectionInfo: loginAndGetConnectionInfo,
+  checkConnection: checkConnection,
 };

@@ -1,7 +1,7 @@
 const { app, BrowserWindow, BrowserView, ipcMain } = require("electron");
 const { UserSettings, Connections } = require("./src/store");
 const PHPServer = require("php-server-manager");
-const { loginAndGetConnectionInfo } = require("./src/adminer");
+const { loginAndGetConnectionInfo, checkConnection } = require("./src/adminer");
 const { v4: uuid } = require("uuid");
 
 const userSettings = UserSettings.load();
@@ -178,14 +178,14 @@ function createWindow() {
       username: args.username,
       password: args.password,
     })
+      .then(checkConnection)
       .then((result) =>
         mainWindow.webContents.session.cookies
           .set(result.cookie)
           .then(() => mainView.webContents.loadURL(result.redirectUrl))
       )
-      // dont want to open adminer view if not 200... (return 403 if parmaeter is invalid)
       .then(() => openAdminerView())
-      .catch((err) => console.log(`failed connecting database: ${err}`))
+      .catch((err) => event.reply("OPEN_CONNECTION_FAILURE")) // TODO: show detail
       .finally(() => event.reply("OPEN_CONNECTION_SUCCESS"));
   });
 
