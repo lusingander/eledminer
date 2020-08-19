@@ -186,7 +186,7 @@ function createWindow() {
       )
       .then(() => openAdminerView())
       .catch((err) => event.reply("OPEN_CONNECTION_FAILURE")) // TODO: show detail
-      .finally(() => event.reply("OPEN_CONNECTION_SUCCESS"));
+      .finally(() => event.reply("OPEN_CONNECTION_COMPLETE"));
   });
 
   ipcMain.on("SAVE_NEW_CONNECTION", (event, args) => {

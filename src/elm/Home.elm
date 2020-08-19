@@ -29,7 +29,7 @@ port removeConnection : JE.Value -> Cmd msg
 port openAdminerHome : () -> Cmd msg
 
 
-port openConnectionSuccess : (() -> msg) -> Sub msg
+port openConnectionComplete : (() -> msg) -> Sub msg
 
 
 port openConnectionFailure : (() -> msg) -> Sub msg
@@ -198,7 +198,7 @@ initErrorStatus =
 
 type Msg
     = OnClickLogin String
-    | OpenConnectionSuccess
+    | OpenConnectionComplete
     | OpenConnectionFailure
     | LoadConnections (Result JD.Error (List ConnectionSetting))
     | SaveNewConnection
@@ -253,7 +253,7 @@ update msg model =
                     , Cmd.none
                     )
 
-        OpenConnectionSuccess ->
+        OpenConnectionComplete ->
             ( { model
                 | uiStatus =
                     { uiStatus
@@ -493,7 +493,7 @@ closeErrorModal model =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ openConnectionSuccess (\_ -> OpenConnectionSuccess)
+        [ openConnectionComplete (\_ -> OpenConnectionComplete)
         , openConnectionFailure (\_ -> OpenConnectionFailure)
         , loadConnections (JD.decodeValue connectionSettingListDecoder)
             |> Sub.map LoadConnections
