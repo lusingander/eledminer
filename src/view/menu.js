@@ -1,5 +1,5 @@
-const { Elm } = require("../../dst/menu.js");
-const { ipcRenderer } = require("electron");
+const Elm = window.menu.Elm;
+const ipcRenderer = window.ipcRenderer;
 
 const app = Elm.Menu.init({
   node: document.getElementById("elm"),

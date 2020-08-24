@@ -1,5 +1,5 @@
-const { Elm } = require("../../dst/home.js");
-const { ipcRenderer } = require("electron");
+const Elm = window.home.Elm;
+const ipcRenderer = window.ipcRenderer;
 
 const app = Elm.Home.init({
   node: document.getElementById("elm"),

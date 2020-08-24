@@ -57,25 +57,28 @@ function createWindow() {
   });
   mainWindow.setMinimumSize(minWindowWidth, minWindowHeight);
 
-  const menuView = new BrowserView({
-    webPreferences: {
-      nodeIntegration: true,
-    },
-  });
-  mainWindow.addBrowserView(menuView);
+  const newBrowserView = (preload) => {
+    const options = preload
+      ? {
+          webPreferences: {
+            nodeIntegration: false,
+            preload: `${__dirname}/src/preload.js`,
+          },
+        }
+      : {};
+    const view = new BrowserView(options);
+    mainWindow.addBrowserView(view);
+    return view;
+  };
 
+  const menuView = newBrowserView(true);
   menuView.setBounds(menuContentBounds(mainWindow.getContentSize()[1]));
   menuView.setAutoResize({
     height: true,
   });
   menuView.webContents.loadURL("file://" + __dirname + "/src/view/menu.html");
 
-  const homeView = new BrowserView({
-    webPreferences: {
-      nodeIntegration: true,
-    },
-  });
-  mainWindow.addBrowserView(homeView);
+  const homeView = newBrowserView(true);
   homeView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
   homeView.setAutoResize({
     width: true,
@@ -84,9 +87,7 @@ function createWindow() {
   const homeUrl = "file://" + __dirname + "/src/view/home.html";
   homeView.webContents.loadURL(homeUrl);
 
-  const mainView = new BrowserView();
-  mainWindow.addBrowserView(mainView);
-
+  const mainView = newBrowserView(false);
   mainView.setBounds(zeroContentBounds());
   mainView.setAutoResize({
     width: true,
@@ -101,12 +102,7 @@ function createWindow() {
 
   let settingsView;
   const createSettingsView = () => {
-    settingsView = new BrowserView({
-      webPreferences: {
-        nodeIntegration: true,
-      },
-    });
-    mainWindow.addBrowserView(settingsView);
+    settingsView = newBrowserView(true);
 
     settingsView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
     settingsView.setAutoResize({
