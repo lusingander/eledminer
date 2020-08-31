@@ -532,7 +532,7 @@ viewModals model =
 viewErrorModal : Model -> Html Msg
 viewErrorModal model =
     div [ class "modal", classIsActive <| model.errorStatus.errorModalOpen ]
-        [ div [ class "modal-background" ] []
+        [ div [ class "modal-background", onClick CloseErrorModal ] []
         , div [ class "modal-content" ]
             [ article [ class "message is-danger" ]
                 [ div [ class "message-header" ]
@@ -656,7 +656,7 @@ viewConnectionModal model =
 viewConnectionModalBase : String -> Msg -> Model -> Html Msg
 viewConnectionModalBase title ok model =
     div [ class "modal", classIsActive <| model.uiStatus.conenctionModalOpen ]
-        [ div [ class "modal-background" ] []
+        [ div [ class "modal-background", onClick CloseConnectionModal ] []
         , div [ class "modal-content" ]
             [ header [ class "modal-card-head" ]
                 [ p [ class "modal-card-title" ] [ text title ] ]
@@ -800,7 +800,7 @@ viewConfirmRemoveConnectionModal model =
             model.uiStatus.confirmRemoveConnectionModalTarget
     in
     div [ class "modal", classIsActive <| open ]
-        [ div [ class "modal-background" ] []
+        [ div [ class "modal-background", onClick CloseConfirmRemoveConnectionModal ] []
         , div [ class "modal-content" ]
             [ header [ class "modal-card-head" ]
                 [ p [ class "modal-card-title" ] [ text "Confirm" ] ]

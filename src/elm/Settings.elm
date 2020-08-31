@@ -149,6 +149,7 @@ type Msg
     | Cancel
     | ConfirmRestart
     | ConfirmPostpone
+    | ConfirmCancel
     | LoadSettings (Result JD.Error UserSettings)
     | OnInputPort String
     | OnChangeTheme String
@@ -208,6 +209,20 @@ update msg model =
                 [ postpone <| encodeUserSettings <| .settings model
                 , hideNotificationAfterWait
                 ]
+            )
+
+        ConfirmCancel ->
+            let
+                status =
+                    .uiStatus model
+            in
+            ( { model
+                | uiStatus =
+                    { status
+                        | confirmModalOpen = False
+                    }
+              }
+            , Cmd.none
             )
 
         LoadSettings (Ok s) ->
@@ -320,7 +335,7 @@ view model =
 viewErrorModal : Model -> Html Msg
 viewErrorModal model =
     div [ class "modal", classIsActive <| model.errorStatus.errorModalOpen ]
-        [ div [ class "modal-background" ] []
+        [ div [ class "modal-background", onClick CloseErrorModal ] []
         , div [ class "modal-content" ]
             [ article [ class "message is-danger" ]
                 [ div [ class "message-header" ]
@@ -473,7 +488,7 @@ viewButtons model =
 viewSaveConfirmModal : UIStatus -> Html Msg
 viewSaveConfirmModal s =
     div [ class "modal", classIsActive <| .confirmModalOpen s ]
-        [ div [ class "modal-background" ] []
+        [ div [ class "modal-background", onClick ConfirmCancel ] []
         , div [ class "modal-content" ]
             [ header [ class "modal-card-head" ]
                 [ p [ class "modal-card-title" ] [ text "Confirm" ] ]
