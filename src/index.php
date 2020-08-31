@@ -3,7 +3,7 @@
 function adminer_object() {
 
     // required to run any plugin
-    include_once "./adminer/plugins/plugin.php";
+    include_once "../adminer/plugins/plugin.php";
     
     class AdminerCustomization extends AdminerPlugin {
         function css() {
@@ -12,12 +12,12 @@ function adminer_object() {
                 return array("");
             }
             $theme = strtr($theme, " ", "_");
-            return array("./adminer/themes/" . $theme. ".css");
+            return array("../adminer/themes/" . $theme. ".css");
         }
     }
 
     // autoloader
-    foreach (glob("adminer/plugins/*.php") as $filename) {
+    foreach (glob("../adminer/plugins/*.php") as $filename) {
         include_once "./$filename";
     }
     
@@ -35,4 +35,4 @@ function adminer_object() {
 }
 
 // include original Adminer or Adminer Editor
-include "./adminer/adminer-4.7.7.php";
+include "../adminer/adminer-4.7.7.php";

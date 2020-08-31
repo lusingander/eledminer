@@ -1,13 +1,14 @@
 const { app, BrowserWindow, BrowserView, ipcMain } = require("electron");
-const { UserSettings, Connections } = require("./src/store");
+const path = require("path");
+const { UserSettings, Connections } = require("./store");
 const PHPServer = require("php-server-manager");
-const { loginAndGetConnectionInfo, checkConnection } = require("./src/adminer");
+const { loginAndGetConnectionInfo, checkConnection } = require("./adminer");
 const { v4: uuid } = require("uuid");
 
 const userSettings = UserSettings.load();
 const server = new PHPServer({
   port: userSettings.port,
-  directory: __dirname,
+  directory: path.join(__dirname, ".."),
   directives: {
     display_errors: 1,
     expose_php: 1,
@@ -28,7 +29,7 @@ app.on("window-all-closed", function() {
 
 function createWindow() {
   server.run();
-  const baseUrl = `http://${server.host}:${server.port}`;
+  const baseUrl = `http://${server.host}:${server.port}/src/`;
 
   const defaultWindowWidth = 1200;
   const defaultWindowHeight = 800;
@@ -62,7 +63,7 @@ function createWindow() {
       ? {
           webPreferences: {
             nodeIntegration: false,
-            preload: `${__dirname}/src/preload.js`,
+            preload: `${__dirname}/preload.js`,
           },
         }
       : {};
@@ -76,7 +77,7 @@ function createWindow() {
   menuView.setAutoResize({
     height: true,
   });
-  menuView.webContents.loadURL("file://" + __dirname + "/src/view/menu.html");
+  menuView.webContents.loadURL("file://" + __dirname + "/view/menu.html");
 
   const homeView = newBrowserView(true);
   homeView.setBounds(mainContentBounds(...mainWindow.getContentSize()));
@@ -84,7 +85,7 @@ function createWindow() {
     width: true,
     height: true,
   });
-  const homeUrl = "file://" + __dirname + "/src/view/home.html";
+  const homeUrl = "file://" + __dirname + "/view/home.html";
   homeView.webContents.loadURL(homeUrl);
 
   const mainView = newBrowserView(false);
@@ -110,7 +111,7 @@ function createWindow() {
       height: true,
     });
     settingsView.webContents.loadURL(
-      "file://" + __dirname + "/src/view/settings.html"
+      "file://" + __dirname + "/view/settings.html"
     );
   };
 
@@ -168,7 +169,7 @@ function createWindow() {
 
   ipcMain.on("OPEN_CONNECTION", (event, args) => {
     loginAndGetConnectionInfo({
-      baseUrl: `http://localhost:${userSettings.port}/`,
+      baseUrl: `http://localhost:${userSettings.port}/src/`,
       driver: args.driver,
       server: `${args.hostname}:${args.port}`,
       username: args.username,
