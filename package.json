@@ -5,8 +5,9 @@
   "main": "./src/main.js",
   "scripts": {
     "start": "npx electron .",
-    "build": "npm run build:elm && npm run package",
+    "release": "npm run build && npm run package",
     "package": "npx electron-packager . eledminer --platform=darwin --arch=x64 --overwrite",
+    "build": "npm run build:elm",
     "build:elm": "npm run build:elm:home && npm run build:elm:menu && npm run build:elm:settings",
     "build:elm:home": "npx elm make src/elm/Home.elm --output ./dst/home.js",
     "build:elm:menu": "npx elm make src/elm/Menu.elm --output ./dst/menu.js",
