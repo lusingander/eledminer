@@ -23,6 +23,7 @@ function adminer_object() {
     
     $plugins = array(
         // specify enabled plugins here
+        new AdminerLoginPasswordLess(password_hash("dummy", PASSWORD_DEFAULT))
     );
     
     /* It is possible to combine customization and plugins:
