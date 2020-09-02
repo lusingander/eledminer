@@ -1,4 +1,4 @@
-module Example exposing (..)
+module ConnectionTest exposing (..)
 
 import Connection exposing (..)
 import Expect
@@ -8,7 +8,7 @@ import Test exposing (..)
 
 suite : Test
 suite =
-    describe "Home module"
+    describe "Connection module"
         [ describe "connection decoder"
             [ test "defaultConnectionSettingDecoder" <|
                 \() ->
