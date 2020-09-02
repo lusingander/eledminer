@@ -1,4 +1,12 @@
-module Connection exposing (..)
+module Connection exposing
+    ( Connection(..)
+    , DefaultConnectionSetting
+    , SqliteConnectionSetting
+    , connectionDecoder
+    , connectionsDecoder
+    , defaultConnectionSettingDecoder
+    , sqliteConnectionSettingDecoder
+    )
 
 import Json.Decode as JD
 
