@@ -1,9 +1,9 @@
-module ConnectionTest exposing (..)
+module ConnectionTest exposing (suite)
 
-import Connection exposing (..)
+import Connection
 import Expect
 import Json.Decode as JD
-import Test exposing (..)
+import Test exposing (Test, describe, test)
 
 
 suite : Test
@@ -96,13 +96,13 @@ suite =
 
                         expected =
                             Ok
-                                [ SqliteConnection
+                                [ Connection.SqliteConnection
                                     { id = "73ea006d-8627-4ff0-90a9-62f2119d642b"
                                     , system = "sqlite"
                                     , name = "test sqlite3 server"
                                     , filepath = "/path/to/file/test.db"
                                     }
-                                , DefaultConnection
+                                , Connection.DefaultConnection
                                     { id = "73ea006d-8627-4ff0-90a9-62f2119d642b"
                                     , system = "server"
                                     , name = "test server"
