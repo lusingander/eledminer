@@ -174,6 +174,7 @@ function createWindow() {
       server: `${args.hostname}:${args.port}`,
       username: args.username,
       password: args.password,
+      filepath: args.filepath,
     })
       .then(checkConnection)
       .then((result) =>

@@ -1,4 +1,5 @@
 const request = require("request");
+const Const = require("./const");
 
 const loginAndGetConnectionInfo = (args) => {
   return new Promise((resolve, reject) => {
@@ -7,13 +8,24 @@ const loginAndGetConnectionInfo = (args) => {
     const server = args.server;
     const username = args.username;
     const password = args.password;
+    const filepath = args.filepath;
 
-    const formData = {
-      "auth[driver]": driver,
-      "auth[server]": server,
-      "auth[username]": username,
-      "auth[password]": password,
-    };
+    let formData;
+    if (driver === "sqlite" || driver === "sqlite2") {
+      formData = {
+        "auth[driver]": driver,
+        "auth[username]": "",
+        "auth[password]": Const.sqliteDummyPassword,
+        "auth[db]": filepath,
+      };
+    } else {
+      formData = {
+        "auth[driver]": driver,
+        "auth[server]": server,
+        "auth[username]": username,
+        "auth[password]": password,
+      };
+    }
     const options = { url: baseUrl, method: "POST", form: formData };
 
     request(options, (error, response, body) => {
