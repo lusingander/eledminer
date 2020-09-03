@@ -61,7 +61,7 @@ main =
 type alias Model =
     { connections : List C.Connection
     , uiStatus : UIStatus
-    , connectionModalInput : C.Connection
+    , connectionModalInput : C.ConnectionFields
     , errorStatus : ErrorStatus
     }
 
@@ -77,7 +77,7 @@ initModel : Model
 initModel =
     { connections = []
     , uiStatus = initUIStatus
-    , connectionModalInput = initConnection
+    , connectionModalInput = initConnectionFields
     , errorStatus = initErrorStatus
     }
 
@@ -101,17 +101,17 @@ initUIStatus =
     }
 
 
-initConnection : C.Connection
-initConnection =
-    C.DefaultConnection
-        { id = ""
-        , system = "server"
-        , name = ""
-        , hostname = ""
-        , portStr = ""
-        , username = ""
-        , password = ""
-        }
+initConnectionFields : C.ConnectionFields
+initConnectionFields =
+    { id = ""
+    , system = "server"
+    , name = ""
+    , hostname = ""
+    , portStr = ""
+    , username = ""
+    , password = ""
+    , filepath = ""
+    }
 
 
 validConnection : C.Connection -> Bool
@@ -248,7 +248,7 @@ update msg model =
 
         SaveNewConnection ->
             ( model
-            , saveNewConnection <| C.encodeConnection connectionModalInput
+            , saveNewConnection <| C.encodeConnection <| C.toConnection connectionModalInput
             )
 
         SaveNewConnectionSuccess (Ok conn) ->
@@ -256,7 +256,7 @@ update msg model =
                 CloseConnectionModal
                 { model
                     | connections = conn :: model.connections
-                    , connectionModalInput = initConnection
+                    , connectionModalInput = initConnectionFields
                 }
 
         SaveNewConnectionSuccess (Err e) ->
@@ -266,7 +266,7 @@ update msg model =
 
         SaveEditConnection ->
             ( model
-            , saveEditConnection <| C.encodeConnection connectionModalInput
+            , saveEditConnection <| C.encodeConnection <| C.toConnection connectionModalInput
             )
 
         SaveEditConnectionSuccess (Ok conn) ->
@@ -274,7 +274,7 @@ update msg model =
                 CloseConnectionModal
                 { model
                     | connections = List.Extra.updateIf (\c -> C.id c == C.id conn) (\_ -> conn) model.connections
-                    , connectionModalInput = initConnection
+                    , connectionModalInput = initConnectionFields
                 }
 
         SaveEditConnectionSuccess (Err e) ->
@@ -311,7 +311,7 @@ update msg model =
                         model.connectionModalInput
 
                     else
-                        initConnection
+                        initConnectionFields
             in
             ( { model
                 | uiStatus =
@@ -333,7 +333,8 @@ update msg model =
                     }
                 , connectionModalInput =
                     List.Extra.find (\c -> C.id c == id) model.connections
-                        |> Maybe.withDefault initConnection
+                        |> Maybe.withDefault C.emptyConnection
+                        |> C.toConnectionFields
               }
             , Cmd.none
             )
@@ -370,101 +371,65 @@ update msg model =
             , Cmd.none
             )
 
-        OnChangeConnectionSystem system ->
-            case connectionModalInput of
-                C.DefaultConnection s ->
-                    ( { model
-                        | connectionModalInput =
-                            C.DefaultConnection
-                                { s
-                                    | system = system
-                                }
-                      }
-                    , Cmd.none
-                    )
+        OnChangeConnectionSystem s ->
+            ( { model
+                | connectionModalInput =
+                    { connectionModalInput
+                        | system = s
+                    }
+              }
+            , Cmd.none
+            )
 
-                C.SqliteConnection _ ->
-                    ( model, Cmd.none )
+        OnChangeConnectionName s ->
+            ( { model
+                | connectionModalInput =
+                    { connectionModalInput
+                        | name = s
+                    }
+              }
+            , Cmd.none
+            )
 
-        OnChangeConnectionName name ->
-            case connectionModalInput of
-                C.DefaultConnection s ->
-                    ( { model
-                        | connectionModalInput =
-                            C.DefaultConnection
-                                { s
-                                    | name = name
-                                }
-                      }
-                    , Cmd.none
-                    )
+        OnChangeConnectionHostname s ->
+            ( { model
+                | connectionModalInput =
+                    { connectionModalInput
+                        | hostname = s
+                    }
+              }
+            , Cmd.none
+            )
 
-                C.SqliteConnection _ ->
-                    ( model, Cmd.none )
+        OnChangeConnectionPort s ->
+            ( { model
+                | connectionModalInput =
+                    { connectionModalInput
+                        | portStr = s
+                    }
+              }
+            , Cmd.none
+            )
 
-        OnChangeConnectionHostname hostname ->
-            case connectionModalInput of
-                C.DefaultConnection s ->
-                    ( { model
-                        | connectionModalInput =
-                            C.DefaultConnection
-                                { s
-                                    | hostname = hostname
-                                }
-                      }
-                    , Cmd.none
-                    )
+        OnChangeConnectionUsername s ->
+            ( { model
+                | connectionModalInput =
+                    { connectionModalInput
+                        | username = s
+                    }
+              }
+            , Cmd.none
+            )
 
-                C.SqliteConnection _ ->
-                    ( model, Cmd.none )
-
-        OnChangeConnectionPort portStr ->
-            case connectionModalInput of
-                C.DefaultConnection s ->
-                    ( { model
-                        | connectionModalInput =
-                            C.DefaultConnection
-                                { s
-                                    | portStr = portStr
-                                }
-                      }
-                    , Cmd.none
-                    )
-
-                C.SqliteConnection _ ->
-                    ( model, Cmd.none )
-
-        OnChangeConnectionUsername username ->
-            case connectionModalInput of
-                C.DefaultConnection s ->
-                    ( { model
-                        | connectionModalInput =
-                            C.DefaultConnection
-                                { s
-                                    | username = username
-                                }
-                      }
-                    , Cmd.none
-                    )
-
-                C.SqliteConnection _ ->
-                    ( model, Cmd.none )
-
-        OnChangeConnectionPassword password ->
-            case connectionModalInput of
-                C.DefaultConnection s ->
-                    ( { model
-                        | connectionModalInput =
-                            C.DefaultConnection
-                                { s
-                                    | password = password
-                                }
-                      }
-                    , Cmd.none
-                    )
-
-                C.SqliteConnection _ ->
-                    ( model, Cmd.none )
+        OnChangeConnectionPassword s ->
+            ( { model
+                | connectionModalInput =
+                    { connectionModalInput
+                        | password = s
+                    }
+              }
+            , Cmd.none
+            )
 
         CloseErrorModal ->
             ( closeErrorModal model
@@ -674,7 +639,7 @@ viewConnectionModalBase title ok model =
                 [ button
                     [ onClick ok
                     , class "button is-primary"
-                    , disabled <| not <| validConnection model.connectionModalInput
+                    , disabled <| not <| validConnection <| C.toConnection model.connectionModalInput
                     ]
                     [ text "OK" ]
                 , button
@@ -689,7 +654,7 @@ viewConnectionModalBase title ok model =
 
 viewNewConnectionModalContent : Model -> Html Msg
 viewNewConnectionModalContent model =
-    case model.connectionModalInput of
+    case C.toConnection model.connectionModalInput of
         C.DefaultConnection s ->
             div [ class "container" ]
                 [ viewHorizontalSystemSelect "System" s.system
