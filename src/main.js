@@ -188,7 +188,7 @@ function createWindow() {
 
   ipcMain.on("SAVE_NEW_CONNECTION", (event, args) => {
     const newConnection = {
-      type: "default",
+      type: args.type,
       id: uuid(), // Generate in Elm...
       driver: args.driver,
       name: args.name,
@@ -196,6 +196,7 @@ function createWindow() {
       port: args.port,
       username: args.username,
       password: args.password,
+      filepath: args.filepath,
     };
     Connections.save(newConnection);
     event.reply("SAVE_NEW_CONNECTION_SUCCESS", newConnection);
@@ -203,7 +204,7 @@ function createWindow() {
 
   ipcMain.on("SAVE_EDIT_CONNECTION", (event, args) => {
     const newConnection = {
-      type: "default",
+      type: args.type,
       id: args.id,
       driver: args.driver,
       name: args.name,
@@ -211,6 +212,7 @@ function createWindow() {
       port: args.port,
       username: args.username,
       password: args.password,
+      filepath: args.filepath,
     };
     Connections.update(newConnection);
     event.reply("SAVE_EDIT_CONNECTION_SUCCESS", newConnection);

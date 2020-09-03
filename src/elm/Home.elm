@@ -116,20 +116,21 @@ initConnectionFields =
 
 validConnection : C.Connection -> Bool
 validConnection c =
+    let
+        isNotEmpty =
+            not << String.isEmpty
+    in
     case c of
         C.DefaultConnection s ->
-            let
-                isNotEmpty =
-                    not << String.isEmpty
-            in
             isNotEmpty s.name
                 && isNotEmpty s.hostname
                 && validPort s.portStr
                 && isNotEmpty s.username
                 && isNotEmpty s.password
 
-        C.SqliteConnection _ ->
-            False
+        C.SqliteConnection s ->
+            isNotEmpty s.name
+                && isNotEmpty s.filepath
 
 
 validPort : String -> Bool
@@ -142,9 +143,9 @@ serverName s =
     s.hostname ++ ":" ++ s.portStr
 
 
-databaseName : C.DefaultConnectionSetting -> String
-databaseName s =
-    List.Extra.find (\( _, v ) -> v == s.system) systemNameAndDrivers
+databaseName : C.Connection -> String
+databaseName c =
+    List.Extra.find (\( _, v ) -> v == C.system c) systemNameAndDrivers
         |> Maybe.map (\( v, _ ) -> v)
         |> Maybe.withDefault ""
 
@@ -185,6 +186,7 @@ type Msg
     | OnChangeConnectionPort String
     | OnChangeConnectionUsername String
     | OnChangeConnectionPassword String
+    | OnChangeConnectionFilepath String
     | CloseErrorModal
 
 
@@ -431,6 +433,16 @@ update msg model =
             , Cmd.none
             )
 
+        OnChangeConnectionFilepath s ->
+            ( { model
+                | connectionModalInput =
+                    { connectionModalInput
+                        | filepath = s
+                    }
+              }
+            , Cmd.none
+            )
+
         CloseErrorModal ->
             ( closeErrorModal model
             , Cmd.none
@@ -568,14 +580,21 @@ buildConnectionCard c =
             , Html.Lazy.lazy viewDefaultConnectionCard
                 { id = s.id
                 , name = s.name
-                , db = databaseName s
+                , db = databaseName c
                 , server = serverName s
                 , user = s.username
                 }
             )
 
-        C.SqliteConnection _ ->
-            ( "", text "" )
+        C.SqliteConnection s ->
+            ( s.id
+            , Html.Lazy.lazy viewSqliteConnectionCard
+                { id = s.id
+                , name = s.name
+                , db = databaseName c
+                , path = s.filepath
+                }
+            )
 
 
 type alias ViewDefaultConnectionCardParameter =
@@ -597,6 +616,30 @@ viewDefaultConnectionCard { id, name, db, server, user } =
                     , p [] [ span [ class "icon" ] [ i [ class "fas fa-database" ] [] ], text db ]
                     , p [] [ span [ class "icon" ] [ i [ class "fas fa-network-wired" ] [] ], text server ]
                     , p [] [ span [ class "icon" ] [ i [ class "fas fa-user" ] [] ], text user ]
+                    ]
+                ]
+            ]
+        ]
+
+
+type alias ViewSqliteConnectionCardParameter =
+    { id : String
+    , name : String
+    , db : String
+    , path : String
+    }
+
+
+viewSqliteConnectionCard : ViewSqliteConnectionCardParameter -> Html Msg
+viewSqliteConnectionCard { id, name, db, path } =
+    div [ class "column is-one-third" ]
+        [ div [ class "card" ]
+            [ div [ class "card-content" ]
+                [ div [ class "content is-small" ]
+                    [ viewConnectionCardHeader id name
+                    , p [] [ span [ class "icon" ] [ i [ class "fas fa-database" ] [] ], text db ]
+                    , p [] [ span [ class "icon" ] [ i [ class "fas fa-folder-open" ] [] ], text path ]
+                    , p [] [ span [ class "icon is-invisible" ] [ i [ class "fas fa-user" ] [] ] ]
                     ]
                 ]
             ]
@@ -665,8 +708,12 @@ viewConnectionModalContent model =
                 , viewHorizontalPasswordInputField "Password" s.password OnChangeConnectionPassword
                 ]
 
-        C.SqliteConnection _ ->
-            text ""
+        C.SqliteConnection s ->
+            div [ class "container" ]
+                [ viewHorizontalSystemSelect "System" s.system
+                , viewHorizontalTextInputField "Connection Name" s.name OnChangeConnectionName
+                , viewHorizontalTextInputField "File Path" s.filepath OnChangeConnectionFilepath
+                ]
 
 
 viewHorizontalSystemSelect : String -> String -> Html Msg

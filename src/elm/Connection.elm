@@ -166,7 +166,8 @@ defaultConnectionSettingDecoder =
 encodeDefaultConnection : DefaultConnectionSetting -> JE.Value
 encodeDefaultConnection c =
     JE.object
-        [ ( "id", JE.string c.id )
+        [ ( "type", JE.string "default" )
+        , ( "id", JE.string c.id )
         , ( "driver", JE.string c.system )
         , ( "name", JE.string c.name )
         , ( "hostname", JE.string c.hostname )
@@ -196,7 +197,8 @@ sqliteConnectionSettingDecoder =
 encodeSqliteConnection : SqliteConnectionSetting -> JE.Value
 encodeSqliteConnection c =
     JE.object
-        [ ( "id", JE.string c.id )
+        [ ( "type", JE.string "sqlite" )
+        , ( "id", JE.string c.id )
         , ( "driver", JE.string c.system )
         , ( "name", JE.string c.name )
         , ( "filepath", JE.string c.filepath )
