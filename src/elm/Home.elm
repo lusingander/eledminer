@@ -633,7 +633,7 @@ viewConnectionModalBase title ok model =
             [ header [ class "modal-card-head" ]
                 [ p [ class "modal-card-title" ] [ text title ] ]
             , section [ class "modal-card-body" ]
-                [ viewNewConnectionModalContent model
+                [ viewConnectionModalContent model
                 ]
             , footer [ class "modal-card-foot" ]
                 [ button
@@ -652,8 +652,8 @@ viewConnectionModalBase title ok model =
         ]
 
 
-viewNewConnectionModalContent : Model -> Html Msg
-viewNewConnectionModalContent model =
+viewConnectionModalContent : Model -> Html Msg
+viewConnectionModalContent model =
     case C.toConnection model.connectionModalInput of
         C.DefaultConnection s ->
             div [ class "container" ]
