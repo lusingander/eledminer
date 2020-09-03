@@ -752,7 +752,8 @@ viewFilepathInput filepath =
         "File Path"
         filepath
         OnChangeConnectionFilepath
-        (span [ onClick OpenSqliteFileDialog ] [ i [ class "fas fa-folder-open" ] [] ])
+        (span [] [ i [ class "fas fa-folder-open" ] [] ])
+        OpenSqliteFileDialog
 
 
 viewHorizontalSystemSelect : String -> String -> Html Msg
@@ -840,13 +841,13 @@ viewHorizontalComponent labelText children =
         ]
 
 
-viewHorizontalAddonsTextInputField : String -> String -> (String -> Msg) -> Html Msg -> Html Msg
+viewHorizontalAddonsTextInputField : String -> String -> (String -> Msg) -> Html Msg -> Msg -> Html Msg
 viewHorizontalAddonsTextInputField =
     viewHorizontalInputAddonsField "text"
 
 
-viewHorizontalInputAddonsField : String -> String -> String -> (String -> Msg) -> Html Msg -> Html Msg
-viewHorizontalInputAddonsField inputType labelText inputValue inputMsg buttonContent =
+viewHorizontalInputAddonsField : String -> String -> String -> (String -> Msg) -> Html Msg -> Msg -> Html Msg
+viewHorizontalInputAddonsField inputType labelText inputValue inputMsg buttonContent buttonMsg =
     viewHorizontalAddonsComponent labelText
         [ p [ class "control is-expanded" ]
             [ input
@@ -857,7 +858,7 @@ viewHorizontalInputAddonsField inputType labelText inputValue inputMsg buttonCon
                 ]
                 []
             ]
-        , p [ class "control" ]
+        , p [ class "control", onClick buttonMsg ]
             [ a [ class "button is-link is-small" ] [ buttonContent ]
             ]
         ]
