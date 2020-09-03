@@ -51,3 +51,11 @@ ipcRenderer.on("REMOVE_CONNECTION_SUCCESS", (_, args) => {
 app.ports.openAdminerHome.subscribe((data) => {
   ipcRenderer.send("OPEN_ADMINER_HOME", data);
 });
+
+app.ports.openSqliteFileDialog.subscribe((data) => {
+  ipcRenderer.send("OPEN_SQLITE_FILE_DIALOG", data);
+});
+
+ipcRenderer.on("OPEN_SQLITE_FILE_DIALOG_SUCCESS", (_, args) => {
+  app.ports.openSqliteFileDialogSuccess.send(args);
+});

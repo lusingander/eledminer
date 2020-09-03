@@ -1,4 +1,10 @@
-const { app, BrowserWindow, BrowserView, ipcMain } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  BrowserView,
+  ipcMain,
+  dialog,
+} = require("electron");
 const path = require("path");
 const { UserSettings, Connections } = require("./store");
 const PHPServer = require("php-server-manager");
@@ -228,6 +234,15 @@ function createWindow() {
   ipcMain.on("OPEN_ADMINER_HOME", () => {
     mainView.webContents.loadURL(baseUrl);
     openAdminerView();
+  });
+
+  ipcMain.on("OPEN_SQLITE_FILE_DIALOG", (event) => {
+    const result = dialog.showOpenDialogSync(mainWindow, {
+      properties: ["openFile"],
+    });
+    if (result) {
+      event.reply("OPEN_SQLITE_FILE_DIALOG_SUCCESS", result[0]);
+    }
   });
 }
 

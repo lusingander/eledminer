@@ -30,6 +30,9 @@ port removeConnection : JE.Value -> Cmd msg
 port openAdminerHome : () -> Cmd msg
 
 
+port openSqliteFileDialog : () -> Cmd msg
+
+
 port openConnectionComplete : (() -> msg) -> Sub msg
 
 
@@ -46,6 +49,9 @@ port saveEditConnectionSuccess : (JD.Value -> msg) -> Sub msg
 
 
 port removeConnectionSuccess : (JD.Value -> msg) -> Sub msg
+
+
+port openSqliteFileDialogSuccess : (JD.Value -> msg) -> Sub msg
 
 
 main : Program () Model Msg
@@ -187,6 +193,8 @@ type Msg
     | OnChangeConnectionUsername String
     | OnChangeConnectionPassword String
     | OnChangeConnectionFilepath String
+    | OpenSqliteFileDialog
+    | OpenSqliteFileDialogSuccess (Result JD.Error String)
     | CloseErrorModal
 
 
@@ -443,6 +451,26 @@ update msg model =
             , Cmd.none
             )
 
+        OpenSqliteFileDialog ->
+            ( model
+            , openSqliteFileDialog ()
+            )
+
+        OpenSqliteFileDialogSuccess (Ok path) ->
+            ( { model
+                | connectionModalInput =
+                    { connectionModalInput
+                        | filepath = path
+                    }
+              }
+            , Cmd.none
+            )
+
+        OpenSqliteFileDialogSuccess (Err e) ->
+            ( showErrorModal (JD.errorToString e) model
+            , Cmd.none
+            )
+
         CloseErrorModal ->
             ( closeErrorModal model
             , Cmd.none
@@ -482,6 +510,8 @@ subscriptions _ =
             |> Sub.map SaveEditConnectionSuccess
         , removeConnectionSuccess (JD.decodeValue JD.string)
             |> Sub.map RemoveConnectionSuccess
+        , openSqliteFileDialogSuccess (JD.decodeValue JD.string)
+            |> Sub.map OpenSqliteFileDialogSuccess
         ]
 
 
@@ -712,8 +742,17 @@ viewConnectionModalContent model =
             div [ class "container" ]
                 [ viewHorizontalSystemSelect "System" s.system
                 , viewHorizontalTextInputField "Connection Name" s.name OnChangeConnectionName
-                , viewHorizontalTextInputField "File Path" s.filepath OnChangeConnectionFilepath
+                , viewFilepathInput s.filepath
                 ]
+
+
+viewFilepathInput : String -> Html Msg
+viewFilepathInput filepath =
+    viewHorizontalAddonsTextInputField
+        "File Path"
+        filepath
+        OnChangeConnectionFilepath
+        (span [ onClick OpenSqliteFileDialog ] [ i [ class "fas fa-folder-open" ] [] ])
 
 
 viewHorizontalSystemSelect : String -> String -> Html Msg
@@ -796,6 +835,41 @@ viewHorizontalComponent labelText children =
             [ label [ class "label" ] [ text labelText ] ]
         , div [ class "field-body" ]
             [ div [ class "field" ]
+                children
+            ]
+        ]
+
+
+viewHorizontalAddonsTextInputField : String -> String -> (String -> Msg) -> Html Msg -> Html Msg
+viewHorizontalAddonsTextInputField =
+    viewHorizontalInputAddonsField "text"
+
+
+viewHorizontalInputAddonsField : String -> String -> String -> (String -> Msg) -> Html Msg -> Html Msg
+viewHorizontalInputAddonsField inputType labelText inputValue inputMsg buttonContent =
+    viewHorizontalAddonsComponent labelText
+        [ p [ class "control is-expanded" ]
+            [ input
+                [ class "input is-small"
+                , type_ inputType
+                , value inputValue
+                , onInput inputMsg
+                ]
+                []
+            ]
+        , p [ class "control" ]
+            [ a [ class "button is-link is-small" ] [ buttonContent ]
+            ]
+        ]
+
+
+viewHorizontalAddonsComponent : String -> List (Html Msg) -> Html Msg
+viewHorizontalAddonsComponent labelText children =
+    div [ class "field is-horizontal" ]
+        [ div [ class "field-label is-small" ]
+            [ label [ class "label" ] [ text labelText ] ]
+        , div [ class "field-body" ]
+            [ div [ class "field has-addons" ]
                 children
             ]
         ]
