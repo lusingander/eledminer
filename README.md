@@ -13,10 +13,26 @@ Eledminer is the Electron application to manage and connect to the Adminer launc
 
 The application starts the php server as local background process and runs Adminer on it, and manage databases using Electron's BrowserView.
 
+### Supported
+
+- MySQL
+  - TCP/IP connection
+- SQLite
+
+### Not supported yet
+
+- MySQL
+  - using SSL
+  - socket/pipe
+  - over SSH
+- other databases
+  - might work, but not tested
+
 ## Installation / Development
 
 ```
 $ npm install
+$ npx elm install
 $ npm run build
 $ npm start
 ```
