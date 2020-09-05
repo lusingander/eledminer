@@ -731,7 +731,7 @@ viewConnectionModalContent model =
         C.DefaultConnection s ->
             div [ class "container" ]
                 [ viewHorizontalSystemSelect "System" s.system
-                , viewHorizontalTextInputField "Connection Name" s.name OnChangeConnectionName
+                , viewHorizontalTextInputField "Name" s.name OnChangeConnectionName
                 , viewHorizontalTextInputField "Hostname" s.hostname OnChangeConnectionHostname
                 , viewHorizontalNumberInputField "Port" s.portStr OnChangeConnectionPort
                 , viewHorizontalTextInputField "Username" s.username OnChangeConnectionUsername
@@ -741,7 +741,7 @@ viewConnectionModalContent model =
         C.SqliteConnection s ->
             div [ class "container" ]
                 [ viewHorizontalSystemSelect "System" s.system
-                , viewHorizontalTextInputField "Connection Name" s.name OnChangeConnectionName
+                , viewHorizontalTextInputField "Name" s.name OnChangeConnectionName
                 , viewFilepathInput s.filepath
                 ]
 
