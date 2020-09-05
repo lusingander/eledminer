@@ -10,6 +10,10 @@ import Html.Lazy
 import Json.Decode as JD
 import Json.Encode as JE
 import List.Extra
+import Random
+import Task
+import Time
+import UUID
 
 
 port loaded : () -> Cmd msg
@@ -174,7 +178,8 @@ type Msg
     | OpenConnectionComplete
     | OpenConnectionFailure
     | LoadConnections (Result JD.Error (List C.Connection))
-    | SaveNewConnection
+    | OnClickSaveNewConnection
+    | SaveNewConnection String
     | SaveNewConnectionSuccess (Result JD.Error C.Connection)
     | SaveEditConnection
     | SaveEditConnectionSuccess (Result JD.Error C.Connection)
@@ -256,9 +261,14 @@ update msg model =
             , Cmd.none
             )
 
-        SaveNewConnection ->
+        OnClickSaveNewConnection ->
             ( model
-            , saveNewConnection <| C.encodeConnection <| C.toConnection connectionModalInput
+            , Task.perform SaveNewConnection <| Task.map UUID.toString newUUID
+            )
+
+        SaveNewConnection id ->
+            ( model
+            , saveNewConnection <| C.encodeConnection <| C.toConnection { connectionModalInput | id = id }
             )
 
         SaveNewConnectionSuccess (Ok conn) ->
@@ -497,6 +507,11 @@ closeErrorModal model =
     }
 
 
+newUUID : Task.Task Never UUID.UUID
+newUUID =
+    Task.map (Tuple.first << Random.step UUID.generator << Random.initialSeed << Time.posixToMillis) Time.now
+
+
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
@@ -692,7 +707,7 @@ viewConnectionCardHeader id name =
 viewConnectionModal : Model -> Html Msg
 viewConnectionModal model =
     if model.uiStatus.isNewConnectionModal then
-        viewConnectionModalBase "New Connection" SaveNewConnection model
+        viewConnectionModalBase "New Connection" OnClickSaveNewConnection model
 
     else
         viewConnectionModalBase "Edit Connection" SaveEditConnection model

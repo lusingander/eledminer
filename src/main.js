@@ -9,7 +9,6 @@ const path = require("path");
 const { UserSettings, Connections } = require("./store");
 const PHPServer = require("php-server-manager");
 const { loginAndGetConnectionInfo, checkConnection } = require("./adminer");
-const { v4: uuid } = require("uuid");
 
 const userSettings = UserSettings.load();
 const server = new PHPServer({
@@ -194,33 +193,13 @@ function createWindow() {
   });
 
   ipcMain.on("SAVE_NEW_CONNECTION", (event, args) => {
-    const newConnection = {
-      type: args.type,
-      id: uuid(), // Generate in Elm...
-      driver: args.driver,
-      name: args.name,
-      hostname: args.hostname,
-      port: args.port,
-      username: args.username,
-      password: args.password,
-      filepath: args.filepath,
-    };
-    Connections.save(newConnection);
+    const newConnection = args;
+    Connections.save(args);
     event.reply("SAVE_NEW_CONNECTION_SUCCESS", newConnection);
   });
 
   ipcMain.on("SAVE_EDIT_CONNECTION", (event, args) => {
-    const newConnection = {
-      type: args.type,
-      id: args.id,
-      driver: args.driver,
-      name: args.name,
-      hostname: args.hostname,
-      port: args.port,
-      username: args.username,
-      password: args.password,
-      filepath: args.filepath,
-    };
+    const newConnection = args;
     Connections.update(newConnection);
     event.reply("SAVE_EDIT_CONNECTION_SUCCESS", newConnection);
   });
