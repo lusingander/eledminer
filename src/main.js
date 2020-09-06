@@ -5,23 +5,10 @@ const {
   ipcMain,
   dialog,
 } = require("electron");
-const path = require("path");
 const { UserSettings, Connections } = require("./store");
-const PHPServer = require("php-server-manager");
-const { loginAndGetConnectionInfo, checkConnection } = require("./adminer");
+const Adminer = require("./adminer");
 
-const userSettings = UserSettings.load();
-const server = new PHPServer({
-  port: userSettings.port,
-  directory: path.join(__dirname, ".."),
-  directives: {
-    display_errors: 1,
-    expose_php: 1,
-  },
-  env: {
-    ELEDMINER_SETTINGS_THEME: userSettings.theme,
-  },
-});
+const server = Adminer.newServer();
 
 let mainWindow;
 
@@ -173,21 +160,21 @@ function createWindow() {
   });
 
   ipcMain.on("OPEN_CONNECTION", (event, args) => {
-    loginAndGetConnectionInfo({
-      baseUrl: `http://localhost:${userSettings.port}/src/`,
+    Adminer.loginAndGetConnectionInfo({
+      baseUrl: `http://localhost:${server.port}/src/`,
       driver: args.driver,
       server: `${args.hostname}:${args.port}`,
       username: args.username,
       password: args.password,
       filepath: args.filepath,
     })
-      .then(checkConnection)
+      .then(Adminer.checkConnection)
       .then((result) =>
         mainWindow.webContents.session.cookies
           .set(result.cookie)
           .then(() => mainView.webContents.loadURL(result.redirectUrl))
       )
-      .then(() => openAdminerView())
+      .then(openAdminerView)
       .catch((err) => event.reply("OPEN_CONNECTION_FAILURE")) // TODO: show detail
       .finally(() => event.reply("OPEN_CONNECTION_COMPLETE"));
   });
