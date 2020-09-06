@@ -28,6 +28,20 @@ The application starts the php server as local background process and runs Admin
 - other databases
   - might work, but not tested
 
+## Features / Screenshot
+
+### Connections management
+
+Eledminer makes it easy to save and manage connections.
+
+<img src="./resource/images/connections.png" width=500>
+
+### SQLite
+
+You can open SQLite database by simply specifying the file path.
+
+<img src="./resource/images/sqlite.png" width=500>
+
 ## Installation / Development
 
 ```
