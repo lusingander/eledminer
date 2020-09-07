@@ -3,11 +3,12 @@ const PHPServer = require("php-server-manager");
 const path = require("path");
 const Const = require("./const");
 const { UserSettings } = require("./store");
+const { canExecutePHP } = require("./php");
 
-module.exports = {
-  newServer: () => {
+class AdminerServer {
+  constructor() {
     const userSettings = UserSettings.load();
-    const server = new PHPServer({
+    this.server = new PHPServer({
       port: userSettings.port,
       directory: path.join(__dirname, ".."),
       directives: {
@@ -21,8 +22,17 @@ module.exports = {
     if (userSettings.php) {
       server.php = userSettings.php;
     }
-    return server;
-  },
+  }
+
+  run = () => this.server.run();
+  close = () => this.server.close();
+  host = () => this.server.host;
+  port = () => this.server.port;
+  canStart = () => canExecutePHP(this.server.php);
+}
+
+module.exports = {
+  newServer: () => new AdminerServer(),
 
   loginAndGetConnectionInfo: (args) => {
     return new Promise((resolve, reject) => {

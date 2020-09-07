@@ -21,7 +21,7 @@ app.on("window-all-closed", function() {
 
 function createWindow() {
   server.run();
-  const baseUrl = `http://${server.host}:${server.port}/src/`;
+  const baseUrl = `http://${server.host()}:${server.port()}/src/`;
 
   const defaultWindowWidth = 1200;
   const defaultWindowHeight = 800;
@@ -161,7 +161,7 @@ function createWindow() {
 
   ipcMain.on("OPEN_CONNECTION", (event, args) => {
     Adminer.loginAndGetConnectionInfo({
-      baseUrl: `http://localhost:${server.port}/src/`,
+      baseUrl: `http://localhost:${server.port()}/src/`,
       driver: args.driver,
       server: `${args.hostname}:${args.port}`,
       username: args.username,
