@@ -430,35 +430,49 @@ viewGeneralSection model =
 
 viewPhpExecutablePath : Model -> Html Msg
 viewPhpExecutablePath model =
-    div [ class "field has-addons" ]
-        [ div [ class "control is-expanded" ]
-            [ input
-                [ class "input is-small"
-                , type_ "text"
-                , value <| model.settings.phpExecutablePath
-                , onInput OnInputPhp
+    div [ class "field" ]
+        [ div [ class "field-body" ]
+            [ div [ class "field has-addons" ]
+                [ div [ class "control is-expanded" ]
+                    [ input
+                        [ class "input is-small"
+                        , type_ "text"
+                        , value <| model.settings.phpExecutablePath
+                        , onInput OnInputPhp
+                        ]
+                        []
+                    ]
+                , div [ class "control", onClick OpenPhpExecutablePathFileDialog ]
+                    [ a [ class "button is-link is-small" ]
+                        [ span [] [ i [ class "fas fa-folder-open" ] [] ]
+                        ]
+                    ]
                 ]
-                []
             ]
-        , div [ class "control", onClick OpenPhpExecutablePathFileDialog ]
-            [ a [ class "button is-link is-small" ]
-                [ span [] [ i [ class "fas fa-folder-open" ] [] ]
-                ]
+        , p [ class "help" ]
+            [ text "The path to PHP executable. If blank, it will be found from the PATH."
             ]
         ]
 
 
 viewPortInput : Model -> Html Msg
 viewPortInput model =
-    input
-        [ class "input is-small"
-        , classInvalidStatus <| model.validStatus.portNumber
-        , type_ "number"
-        , placeholder "8000"
-        , value <| model.settings.portNumber
-        , onInput OnInputPort
+    div [ class "field" ]
+        [ div [ class "control" ]
+            [ input
+                [ class "input is-small"
+                , classInvalidStatus <| model.validStatus.portNumber
+                , type_ "number"
+                , placeholder "8000"
+                , value <| model.settings.portNumber
+                , onInput OnInputPort
+                ]
+                []
+            ]
+        , p [ class "help" ]
+            [ text "The port to run the PHP server."
+            ]
         ]
-        []
 
 
 classInvalidStatus : Bool -> Html.Attribute Msg
