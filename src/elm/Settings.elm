@@ -172,18 +172,16 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        settings =
+            .settings model
+
+        validStatus =
+            .validStatus model
+    in
     case msg of
         Save ->
-            let
-                status =
-                    .uiStatus model
-            in
-            ( { model
-                | uiStatus =
-                    { status
-                        | confirmModalOpen = True
-                    }
-              }
+            ( showConfirmModal model
             , Cmd.none
             )
 
@@ -193,31 +191,12 @@ update msg model =
             )
 
         ConfirmRestart ->
-            let
-                status =
-                    .uiStatus model
-            in
-            ( { model
-                | uiStatus =
-                    { status
-                        | confirmModalOpen = False
-                    }
-              }
+            ( closeConfirmModal model
             , restart <| encodeUserSettings <| .settings model
             )
 
         ConfirmPostpone ->
-            let
-                status =
-                    .uiStatus model
-            in
-            ( { model
-                | uiStatus =
-                    { status
-                        | confirmModalOpen = False
-                        , notificationVisible = True
-                    }
-              }
+            ( showNotification <| closeConfirmModal model
             , Cmd.batch
                 [ postpone <| encodeUserSettings <| .settings model
                 , hideNotificationAfterWait
@@ -225,16 +204,7 @@ update msg model =
             )
 
         ConfirmCancel ->
-            let
-                status =
-                    .uiStatus model
-            in
-            ( { model
-                | uiStatus =
-                    { status
-                        | confirmModalOpen = False
-                    }
-              }
+            ( closeConfirmModal model
             , Cmd.none
             )
 
@@ -246,20 +216,11 @@ update msg model =
             )
 
         LoadSettings (Err e) ->
-            ( { model
-                | errorStatus =
-                    { errorModalOpen = True
-                    , lastErrorMessage = JD.errorToString e
-                    }
-              }
+            ( showErrorModal (JD.errorToString e) model
             , Cmd.none
             )
 
         OnInputPhp s ->
-            let
-                settings =
-                    .settings model
-            in
             ( { model
                 | settings =
                     { settings
@@ -270,13 +231,6 @@ update msg model =
             )
 
         OnInputPort s ->
-            let
-                settings =
-                    .settings model
-
-                validStatus =
-                    .validStatus model
-            in
             ( { model
                 | settings =
                     { settings
@@ -296,10 +250,6 @@ update msg model =
             )
 
         OpenPhpExecutablePathFileDialogSuccess (Ok path) ->
-            let
-                settings =
-                    .settings model
-            in
             ( { model
                 | settings =
                     { settings
@@ -310,20 +260,11 @@ update msg model =
             )
 
         OpenPhpExecutablePathFileDialogSuccess (Err e) ->
-            ( { model
-                | errorStatus =
-                    { errorModalOpen = True
-                    , lastErrorMessage = JD.errorToString e
-                    }
-              }
+            ( showErrorModal (JD.errorToString e) model
             , Cmd.none
             )
 
         OnChangeTheme s ->
-            let
-                settings =
-                    .settings model
-            in
             ( { model
                 | settings =
                     { settings
@@ -334,32 +275,74 @@ update msg model =
             )
 
         HideNotification ->
-            let
-                status =
-                    .uiStatus model
-            in
-            ( { model
-                | uiStatus =
-                    { status
-                        | notificationVisible = False
-                    }
-              }
+            ( hideNotification model
             , Cmd.none
             )
 
         CloseErrorModal ->
-            let
-                errorStatus =
-                    .errorStatus model
-            in
-            ( { model
-                | errorStatus =
-                    { errorStatus
-                        | errorModalOpen = False
-                    }
-              }
+            ( closeErrorModal model
             , Cmd.none
             )
+
+
+showConfirmModal : Model -> Model
+showConfirmModal model =
+    { model
+        | uiStatus =
+            { confirmModalOpen = True
+            , notificationVisible = model.uiStatus.notificationVisible
+            }
+    }
+
+
+closeConfirmModal : Model -> Model
+closeConfirmModal model =
+    { model
+        | uiStatus =
+            { confirmModalOpen = False
+            , notificationVisible = model.uiStatus.notificationVisible
+            }
+    }
+
+
+showNotification : Model -> Model
+showNotification model =
+    { model
+        | uiStatus =
+            { confirmModalOpen = model.uiStatus.confirmModalOpen
+            , notificationVisible = True
+            }
+    }
+
+
+hideNotification : Model -> Model
+hideNotification model =
+    { model
+        | uiStatus =
+            { confirmModalOpen = model.uiStatus.confirmModalOpen
+            , notificationVisible = False
+            }
+    }
+
+
+showErrorModal : String -> Model -> Model
+showErrorModal message model =
+    { model
+        | errorStatus =
+            { errorModalOpen = True
+            , lastErrorMessage = message
+            }
+    }
+
+
+closeErrorModal : Model -> Model
+closeErrorModal model =
+    { model
+        | errorStatus =
+            { errorModalOpen = False
+            , lastErrorMessage = model.errorStatus.lastErrorMessage
+            }
+    }
 
 
 subscriptions : Model -> Sub Msg
