@@ -5,6 +5,7 @@ module.exports = {
     static load() {
       const store = new Store();
       return new UserSettings({
+        php: store.get("general.php", ""),
         port: store.get("general.port", 8000),
         theme: store.get("appearance.theme", "default"),
       });
@@ -12,11 +13,13 @@ module.exports = {
 
     static save(params) {
       const store = new Store();
+      store.set("general.php", params.php);
       store.set("general.port", params.port);
       store.set("appearance.theme", params.theme);
     }
 
     constructor(params) {
+      this.php = params.php;
       this.port = params.port;
       this.theme = params.theme;
     }

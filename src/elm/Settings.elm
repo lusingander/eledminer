@@ -60,21 +60,24 @@ initModel =
 
 
 type alias UserSettings =
-    { portNumber : String
+    { phpExecutablePath : String
+    , portNumber : String
     , theme : String
     }
 
 
 initUserSettings : UserSettings
 initUserSettings =
-    { portNumber = ""
+    { phpExecutablePath = ""
+    , portNumber = ""
     , theme = ""
     }
 
 
 userSettingsDecoder : JD.Decoder UserSettings
 userSettingsDecoder =
-    JD.map2 UserSettings
+    JD.map3 UserSettings
+        (JD.field "php" JD.string)
         (JD.field "port" JD.int |> JD.map String.fromInt)
         (JD.field "theme" JD.string)
 
@@ -82,7 +85,8 @@ userSettingsDecoder =
 encodeUserSettings : UserSettings -> JE.Value
 encodeUserSettings s =
     JE.object
-        [ ( "port", JE.int <| portNumberAsInt s )
+        [ ( "php", JE.string <| .phpExecutablePath s )
+        , ( "port", JE.int <| portNumberAsInt s )
         , ( "theme", JE.string <| .theme s )
         ]
 
@@ -151,6 +155,7 @@ type Msg
     | ConfirmPostpone
     | ConfirmCancel
     | LoadSettings (Result JD.Error UserSettings)
+    | OnInputPhp String
     | OnInputPort String
     | OnChangeTheme String
     | HideNotification
@@ -237,6 +242,20 @@ update msg model =
                 | errorStatus =
                     { errorModalOpen = True
                     , lastErrorMessage = JD.errorToString e
+                    }
+              }
+            , Cmd.none
+            )
+
+        OnInputPhp s ->
+            let
+                settings =
+                    .settings model
+            in
+            ( { model
+                | settings =
+                    { settings
+                        | phpExecutablePath = s
                     }
               }
             , Cmd.none
@@ -368,7 +387,14 @@ viewGeneralSection model =
             [ h2 [ class "title is-4" ]
                 [ text "General" ]
             , h3 [ class "title is-5" ]
-                [ text "Port" ]
+                [ text "PHP Executable Path" ]
+            , div [ class "columns" ]
+                [ div [ class "column is-half" ]
+                    [ viewPhpExecutablePath model
+                    ]
+                ]
+            , h3 [ class "title is-5" ]
+                [ text "PHP Server Port" ]
             , div [ class "columns" ]
                 [ div [ class "column is-one-quarter" ]
                     [ viewPortInput model
@@ -376,6 +402,17 @@ viewGeneralSection model =
                 ]
             ]
         ]
+
+
+viewPhpExecutablePath : Model -> Html Msg
+viewPhpExecutablePath model =
+    input
+        [ class "input"
+        , type_ "text"
+        , value <| model.settings.phpExecutablePath
+        , onInput OnInputPhp
+        ]
+        []
 
 
 viewPortInput : Model -> Html Msg
