@@ -7,7 +7,7 @@ const { UserSettings } = require("./store");
 module.exports = {
   newServer: () => {
     const userSettings = UserSettings.load();
-    return new PHPServer({
+    const server = new PHPServer({
       port: userSettings.port,
       directory: path.join(__dirname, ".."),
       directives: {
@@ -18,6 +18,10 @@ module.exports = {
         ELEDMINER_SETTINGS_THEME: userSettings.theme,
       },
     });
+    if (userSettings.php) {
+      server.php = userSettings.php;
+    }
+    return server;
   },
 
   loginAndGetConnectionInfo: (args) => {
