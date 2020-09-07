@@ -210,6 +210,15 @@ function createWindow() {
       event.reply("OPEN_SQLITE_FILE_DIALOG_SUCCESS", result[0]);
     }
   });
+
+  ipcMain.on("OPEN_PHP_EXECUTABLE_PATH_FILE_DIALOG", (event) => {
+    const result = dialog.showOpenDialogSync(mainWindow, {
+      properties: ["openFile"],
+    });
+    if (result) {
+      event.reply("OPEN_PHP_EXECUTABLE_PATH_FILE_DIALOG_SUCCESS", result[0]);
+    }
+  });
 }
 
 app.on("activate", function() {

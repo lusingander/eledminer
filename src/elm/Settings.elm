@@ -16,6 +16,9 @@ port documentLoaded : () -> Cmd msg
 port cancel : () -> Cmd msg
 
 
+port openPhpExecutablePathFileDialog : () -> Cmd msg
+
+
 port restart : JE.Value -> Cmd msg
 
 
@@ -23,6 +26,9 @@ port postpone : JE.Value -> Cmd msg
 
 
 port loadSettings : (JD.Value -> msg) -> Sub msg
+
+
+port openPhpExecutablePathFileDialogSuccess : (JD.Value -> msg) -> Sub msg
 
 
 main : Program () Model Msg
@@ -158,6 +164,8 @@ type Msg
     | OnInputPhp String
     | OnInputPort String
     | OnChangeTheme String
+    | OpenPhpExecutablePathFileDialog
+    | OpenPhpExecutablePathFileDialogSuccess (Result JD.Error String)
     | HideNotification
     | CloseErrorModal
 
@@ -282,6 +290,35 @@ update msg model =
             , Cmd.none
             )
 
+        OpenPhpExecutablePathFileDialog ->
+            ( model
+            , openPhpExecutablePathFileDialog ()
+            )
+
+        OpenPhpExecutablePathFileDialogSuccess (Ok path) ->
+            let
+                settings =
+                    .settings model
+            in
+            ( { model
+                | settings =
+                    { settings
+                        | phpExecutablePath = path
+                    }
+              }
+            , Cmd.none
+            )
+
+        OpenPhpExecutablePathFileDialogSuccess (Err e) ->
+            ( { model
+                | errorStatus =
+                    { errorModalOpen = True
+                    , lastErrorMessage = JD.errorToString e
+                    }
+              }
+            , Cmd.none
+            )
+
         OnChangeTheme s ->
             let
                 settings =
@@ -327,8 +364,12 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    loadSettings (JD.decodeValue userSettingsDecoder)
-        |> Sub.map LoadSettings
+    Sub.batch
+        [ loadSettings (JD.decodeValue userSettingsDecoder)
+            |> Sub.map LoadSettings
+        , openPhpExecutablePathFileDialogSuccess (JD.decodeValue JD.string)
+            |> Sub.map OpenPhpExecutablePathFileDialogSuccess
+        ]
 
 
 view : Model -> Html Msg
@@ -416,7 +457,7 @@ viewPhpExecutablePath model =
                 ]
                 []
             ]
-        , div [ class "control" ]
+        , div [ class "control", onClick OpenPhpExecutablePathFileDialog ]
             [ a [ class "button is-link is-small" ]
                 [ span [] [ i [ class "fas fa-folder-open" ] [] ]
                 ]
