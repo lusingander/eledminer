@@ -1,7 +1,7 @@
 port module Settings exposing (main)
 
 import Browser
-import Html exposing (Html, article, button, div, footer, h1, h2, h3, header, input, option, p, section, select, span, text)
+import Html exposing (Html, a, article, button, div, footer, h1, h2, h3, header, i, input, option, p, section, select, span, text)
 import Html.Attributes exposing (class, disabled, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
@@ -406,19 +406,28 @@ viewGeneralSection model =
 
 viewPhpExecutablePath : Model -> Html Msg
 viewPhpExecutablePath model =
-    input
-        [ class "input"
-        , type_ "text"
-        , value <| model.settings.phpExecutablePath
-        , onInput OnInputPhp
+    div [ class "field has-addons" ]
+        [ div [ class "control is-expanded" ]
+            [ input
+                [ class "input is-small"
+                , type_ "text"
+                , value <| model.settings.phpExecutablePath
+                , onInput OnInputPhp
+                ]
+                []
+            ]
+        , div [ class "control" ]
+            [ a [ class "button is-link is-small" ]
+                [ span [] [ i [ class "fas fa-folder-open" ] [] ]
+                ]
+            ]
         ]
-        []
 
 
 viewPortInput : Model -> Html Msg
 viewPortInput model =
     input
-        [ class "input"
+        [ class "input is-small"
         , classInvalidStatus <| model.validStatus.portNumber
         , type_ "number"
         , placeholder "8000"
@@ -446,7 +455,7 @@ viewAppearanceSection s =
             , h3 [ class "title is-5" ]
                 [ text "Theme" ]
             , div []
-                [ div [ class "select" ]
+                [ div [ class "select is-small" ]
                     [ viewThemeSelect s
                     ]
                 ]
