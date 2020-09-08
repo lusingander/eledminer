@@ -58,6 +58,9 @@ port removeConnectionSuccess : (JD.Value -> msg) -> Sub msg
 port openSqliteFileDialogSuccess : (JD.Value -> msg) -> Sub msg
 
 
+port phpServerNotRunning : (() -> msg) -> Sub msg
+
+
 main : Program () Model Msg
 main =
     Browser.element
@@ -201,6 +204,7 @@ type Msg
     | OpenSqliteFileDialog
     | OpenSqliteFileDialogSuccess (Result JD.Error String)
     | CloseErrorModal
+    | PhpServerNotRunning
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -220,12 +224,7 @@ update msg model =
             in
             case selected of
                 Just conn ->
-                    ( { model
-                        | uiStatus =
-                            { uiStatus
-                                | loaderActive = True
-                            }
-                      }
+                    ( showLoader model
                     , openConnection <| C.encodeConnection <| conn
                     )
 
@@ -235,12 +234,7 @@ update msg model =
                     )
 
         OpenConnectionComplete ->
-            ( { model
-                | uiStatus =
-                    { uiStatus
-                        | loaderActive = False
-                    }
-              }
+            ( hideLoader model
             , Cmd.none
             )
 
@@ -486,6 +480,40 @@ update msg model =
             , Cmd.none
             )
 
+        PhpServerNotRunning ->
+            ( hideLoader model
+                |> showErrorModal "PHP Server is not running. Check the PHP executable path in the settings page."
+            , Cmd.none
+            )
+
+
+showLoader : Model -> Model
+showLoader model =
+    let
+        uiStatus =
+            model.uiStatus
+    in
+    { model
+        | uiStatus =
+            { uiStatus
+                | loaderActive = True
+            }
+    }
+
+
+hideLoader : Model -> Model
+hideLoader model =
+    let
+        uiStatus =
+            model.uiStatus
+    in
+    { model
+        | uiStatus =
+            { uiStatus
+                | loaderActive = False
+            }
+    }
+
 
 showErrorModal : String -> Model -> Model
 showErrorModal message model =
@@ -527,6 +555,7 @@ subscriptions _ =
             |> Sub.map RemoveConnectionSuccess
         , openSqliteFileDialogSuccess (JD.decodeValue JD.string)
             |> Sub.map OpenSqliteFileDialogSuccess
+        , phpServerNotRunning (\_ -> PhpServerNotRunning)
         ]
 
 

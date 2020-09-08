@@ -20,7 +20,9 @@ app.on("window-all-closed", function() {
 });
 
 function createWindow() {
-  server.run();
+  if (server.canStart()) {
+    server.run();
+  }
   const baseUrl = `http://${server.host()}:${server.port()}/src/`;
 
   const defaultWindowWidth = 1200;
@@ -160,6 +162,10 @@ function createWindow() {
   });
 
   ipcMain.on("OPEN_CONNECTION", (event, args) => {
+    if (!server.running) {
+      event.reply("PHP_SERVER_NOT_RUNNING");
+      return;
+    }
     Adminer.loginAndGetConnectionInfo({
       baseUrl: `http://localhost:${server.port()}/src/`,
       driver: args.driver,
@@ -197,7 +203,11 @@ function createWindow() {
     event.reply("REMOVE_CONNECTION_SUCCESS", id);
   });
 
-  ipcMain.on("OPEN_ADMINER_HOME", () => {
+  ipcMain.on("OPEN_ADMINER_HOME", (event) => {
+    if (!server.running) {
+      event.reply("PHP_SERVER_NOT_RUNNING");
+      return;
+    }
     mainView.webContents.loadURL(baseUrl);
     openAdminerView();
   });

@@ -59,3 +59,7 @@ app.ports.openSqliteFileDialog.subscribe((data) => {
 ipcRenderer.on("OPEN_SQLITE_FILE_DIALOG_SUCCESS", (_, args) => {
   app.ports.openSqliteFileDialogSuccess.send(args);
 });
+
+ipcRenderer.on("PHP_SERVER_NOT_RUNNING", () => {
+  app.ports.phpServerNotRunning.send(null);
+});

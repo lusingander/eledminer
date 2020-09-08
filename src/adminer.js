@@ -20,14 +20,25 @@ class AdminerServer {
       },
     });
     if (userSettings.php) {
-      server.php = userSettings.php;
+      this.server.php = userSettings.php;
     }
+    this.running = false;
   }
 
-  run = () => this.server.run();
-  close = () => this.server.close();
+  run = () => {
+    this.server.run();
+    this.running = true;
+  };
+
+  close = () => {
+    this.server.close();
+    this.running = false;
+  };
+
   host = () => this.server.host;
+
   port = () => this.server.port;
+
   canStart = () => canExecutePHP(this.server.php);
 }
 
