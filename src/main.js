@@ -7,6 +7,7 @@ const {
 } = require("electron");
 const { UserSettings, Connections } = require("./store");
 const Adminer = require("./adminer");
+const { canExecutePHP } = require("./php");
 
 const server = Adminer.newServer();
 
@@ -228,6 +229,12 @@ function createWindow() {
     if (result) {
       event.reply("OPEN_PHP_EXECUTABLE_PATH_FILE_DIALOG_SUCCESS", result[0]);
     }
+  });
+
+  ipcMain.on("VERIFY_PHP_EXECUTABLE_PATH", (event, args) => {
+    const php = args || "php";
+    const ret = canExecutePHP(php);
+    event.reply("VERIFY_PHP_EXECUTABLE_PATH_SUCCESS", ret);
   });
 }
 

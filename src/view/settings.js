@@ -16,6 +16,14 @@ app.ports.cancel.subscribe(function(data) {
   ipcRenderer.send("SETTINGS_CANCEL");
 });
 
+app.ports.verifyPhpExecutablePath.subscribe((data) => {
+  ipcRenderer.send("VERIFY_PHP_EXECUTABLE_PATH", data);
+});
+
+ipcRenderer.on("VERIFY_PHP_EXECUTABLE_PATH_SUCCESS", (_, args) => {
+  app.ports.verifyPhpExecutablePathSuccess.send(args);
+});
+
 app.ports.openPhpExecutablePathFileDialog.subscribe(() => {
   ipcRenderer.send("OPEN_PHP_EXECUTABLE_PATH_FILE_DIALOG");
 });

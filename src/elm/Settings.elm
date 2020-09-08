@@ -25,10 +25,16 @@ port restart : JE.Value -> Cmd msg
 port postpone : JE.Value -> Cmd msg
 
 
+port verifyPhpExecutablePath : JE.Value -> Cmd msg
+
+
 port loadSettings : (JD.Value -> msg) -> Sub msg
 
 
 port openPhpExecutablePathFileDialogSuccess : (JD.Value -> msg) -> Sub msg
+
+
+port verifyPhpExecutablePathSuccess : (JD.Value -> msg) -> Sub msg
 
 
 main : Program () Model Msg
@@ -45,7 +51,6 @@ type alias Model =
     { settings : UserSettings
     , validStatus : ValidStatus
     , uiStatus : UIStatus
-    , errorStatus : ErrorStatus
     }
 
 
@@ -61,7 +66,6 @@ initModel =
     { settings = initUserSettings
     , validStatus = initValidStatus
     , uiStatus = initUIStatus
-    , errorStatus = initErrorStatus
     }
 
 
@@ -130,6 +134,10 @@ canSave s =
 
 type alias UIStatus =
     { confirmModalOpen : Bool
+    , infoModalOpen : Bool
+    , lastInfoMessage : String
+    , errorModalOpen : Bool
+    , lastErrorMessage : String
     , notificationVisible : Bool
     }
 
@@ -137,20 +145,11 @@ type alias UIStatus =
 initUIStatus : UIStatus
 initUIStatus =
     { confirmModalOpen = False
-    , notificationVisible = False
-    }
-
-
-type alias ErrorStatus =
-    { errorModalOpen : Bool
-    , lastErrorMessage : String
-    }
-
-
-initErrorStatus : ErrorStatus
-initErrorStatus =
-    { errorModalOpen = False
+    , infoModalOpen = False
+    , lastInfoMessage = ""
+    , errorModalOpen = False
     , lastErrorMessage = ""
+    , notificationVisible = False
     }
 
 
@@ -162,11 +161,14 @@ type Msg
     | ConfirmCancel
     | LoadSettings (Result JD.Error UserSettings)
     | OnInputPhp String
+    | VerifyPhpExecutablePath String
+    | VerifyPhpExecutablePathSuccess (Result JD.Error Bool)
     | OnInputPort String
     | OnChangeTheme String
     | OpenPhpExecutablePathFileDialog
     | OpenPhpExecutablePathFileDialogSuccess (Result JD.Error String)
     | HideNotification
+    | CloseInfoModal
     | CloseErrorModal
 
 
@@ -230,6 +232,27 @@ update msg model =
             , Cmd.none
             )
 
+        VerifyPhpExecutablePath s ->
+            ( model
+            , verifyPhpExecutablePath <| JE.string s
+            )
+
+        VerifyPhpExecutablePathSuccess (Ok success) ->
+            if success then
+                ( showInfoModal "The given PHP executable path is valid. The server can be started." model
+                , Cmd.none
+                )
+
+            else
+                ( showErrorModal "The given PHP executable path is invalid. The server cannot be started." model
+                , Cmd.none
+                )
+
+        VerifyPhpExecutablePathSuccess (Err e) ->
+            ( showErrorModal (JD.errorToString e) model
+            , Cmd.none
+            )
+
         OnInputPort s ->
             ( { model
                 | settings =
@@ -279,6 +302,11 @@ update msg model =
             , Cmd.none
             )
 
+        CloseInfoModal ->
+            ( closeInfoModal model
+            , Cmd.none
+            )
+
         CloseErrorModal ->
             ( closeErrorModal model
             , Cmd.none
@@ -286,61 +314,125 @@ update msg model =
 
 
 showConfirmModal : Model -> Model
-showConfirmModal model =
-    { model
-        | uiStatus =
-            { confirmModalOpen = True
-            , notificationVisible = model.uiStatus.notificationVisible
-            }
-    }
+showConfirmModal =
+    updateConfirmModalOpenStatus True
 
 
 closeConfirmModal : Model -> Model
-closeConfirmModal model =
+closeConfirmModal =
+    updateConfirmModalOpenStatus False
+
+
+updateConfirmModalOpenStatus : Bool -> Model -> Model
+updateConfirmModalOpenStatus open model =
+    let
+        oldUIStatus =
+            model.uiStatus
+    in
     { model
         | uiStatus =
-            { confirmModalOpen = False
-            , notificationVisible = model.uiStatus.notificationVisible
+            { oldUIStatus
+                | confirmModalOpen = open
             }
     }
 
 
 showNotification : Model -> Model
-showNotification model =
+showNotification =
+    updateNotificationVisibleStatus True
+
+
+hideNotification : Model -> Model
+hideNotification =
+    updateNotificationVisibleStatus False
+
+
+updateNotificationVisibleStatus : Bool -> Model -> Model
+updateNotificationVisibleStatus visible model =
+    let
+        oldUIStatus =
+            model.uiStatus
+    in
     { model
         | uiStatus =
-            { confirmModalOpen = model.uiStatus.confirmModalOpen
-            , notificationVisible = True
+            { oldUIStatus
+                | notificationVisible = visible
             }
     }
 
 
-hideNotification : Model -> Model
-hideNotification model =
+showInfoModal : String -> Model -> Model
+showInfoModal message =
+    updateInfoModalOpenStatus True >> updateInfoModalLastMessage message
+
+
+updateInfoModalLastMessage : String -> Model -> Model
+updateInfoModalLastMessage message model =
+    let
+        oldUIStatus =
+            model.uiStatus
+    in
     { model
         | uiStatus =
-            { confirmModalOpen = model.uiStatus.confirmModalOpen
-            , notificationVisible = False
+            { oldUIStatus
+                | lastInfoMessage = message
+            }
+    }
+
+
+closeInfoModal : Model -> Model
+closeInfoModal =
+    updateInfoModalOpenStatus False
+
+
+updateInfoModalOpenStatus : Bool -> Model -> Model
+updateInfoModalOpenStatus open model =
+    let
+        oldUIStatus =
+            model.uiStatus
+    in
+    { model
+        | uiStatus =
+            { oldUIStatus
+                | infoModalOpen = open
             }
     }
 
 
 showErrorModal : String -> Model -> Model
-showErrorModal message model =
+showErrorModal message =
+    updateErrorModalOpenStatus True >> updateErrorModalLastMessage message
+
+
+updateErrorModalLastMessage : String -> Model -> Model
+updateErrorModalLastMessage message model =
+    let
+        oldUIStatus =
+            model.uiStatus
+    in
     { model
-        | errorStatus =
-            { errorModalOpen = True
-            , lastErrorMessage = message
+        | uiStatus =
+            { oldUIStatus
+                | lastErrorMessage = message
             }
     }
 
 
 closeErrorModal : Model -> Model
-closeErrorModal model =
+closeErrorModal =
+    updateErrorModalOpenStatus False
+
+
+updateErrorModalOpenStatus : Bool -> Model -> Model
+updateErrorModalOpenStatus open model =
+    let
+        oldUIStatus =
+            model.uiStatus
+    in
     { model
-        | errorStatus =
-            { errorModalOpen = False
-            , lastErrorMessage = model.errorStatus.lastErrorMessage
+        | uiStatus =
+            { oldUIStatus
+                | errorModalOpen = open
             }
     }
 
@@ -352,6 +444,8 @@ subscriptions _ =
             |> Sub.map LoadSettings
         , openPhpExecutablePathFileDialogSuccess (JD.decodeValue JD.string)
             |> Sub.map OpenPhpExecutablePathFileDialogSuccess
+        , verifyPhpExecutablePathSuccess (JD.decodeValue JD.bool)
+            |> Sub.map VerifyPhpExecutablePathSuccess
         ]
 
 
@@ -365,7 +459,8 @@ view model =
             .uiStatus model
     in
     div []
-        [ viewErrorModal model
+        [ viewInfoModal model
+        , viewErrorModal model
         , viewHeader
         , viewGeneralSection model
         , viewAppearanceSection settings
@@ -375,9 +470,26 @@ view model =
         ]
 
 
+viewInfoModal : Model -> Html Msg
+viewInfoModal model =
+    div [ class "modal", classIsActive <| model.uiStatus.infoModalOpen ]
+        [ div [ class "modal-background", onClick CloseInfoModal ] []
+        , div [ class "modal-content" ]
+            [ article [ class "message is-info" ]
+                [ div [ class "message-header" ]
+                    [ p [] [ text "Info" ]
+                    , button [ onClick CloseInfoModal, class "delete" ] []
+                    ]
+                , div [ class "message-body" ]
+                    [ text model.uiStatus.lastInfoMessage ]
+                ]
+            ]
+        ]
+
+
 viewErrorModal : Model -> Html Msg
 viewErrorModal model =
-    div [ class "modal", classIsActive <| model.errorStatus.errorModalOpen ]
+    div [ class "modal", classIsActive <| model.uiStatus.errorModalOpen ]
         [ div [ class "modal-background", onClick CloseErrorModal ] []
         , div [ class "modal-content" ]
             [ article [ class "message is-danger" ]
@@ -386,7 +498,7 @@ viewErrorModal model =
                     , button [ onClick CloseErrorModal, class "delete" ] []
                     ]
                 , div [ class "message-body" ]
-                    [ text model.errorStatus.lastErrorMessage ]
+                    [ text model.uiStatus.lastErrorMessage ]
                 ]
             ]
         ]
@@ -415,6 +527,12 @@ viewGeneralSection model =
             , div [ class "columns" ]
                 [ div [ class "column is-half" ]
                     [ viewPhpExecutablePath model
+                    ]
+                , div [ class "column" ]
+                    [ div
+                        [ class "control", onClick <| VerifyPhpExecutablePath model.settings.phpExecutablePath ]
+                        [ a [ class "button is-warning is-light is-rounded is-small" ] [ text "Verify Path" ]
+                        ]
                     ]
                 ]
             , h3 [ class "title is-5" ]
