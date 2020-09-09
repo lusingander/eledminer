@@ -6,10 +6,11 @@ const app = Elm.Home.init({
 });
 
 app.ports.loaded.subscribe(() => {
-  ipcRenderer.on("HOME_LOADED_REPLY", (_, args) => {
-    app.ports.loadConnections.send(args);
-  });
   ipcRenderer.send("HOME_LOADED");
+});
+
+ipcRenderer.on("HOME_LOADED_REPLY", (_, args) => {
+  app.ports.loadConnections.send(args);
 });
 
 app.ports.openConnection.subscribe((data) => {
