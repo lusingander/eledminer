@@ -75,7 +75,6 @@ type alias Model =
     { connections : List C.Connection
     , uiStatus : UIStatus
     , connectionModalInput : C.ConnectionFields
-    , errorStatus : ErrorStatus
     }
 
 
@@ -91,7 +90,6 @@ initModel =
     { connections = []
     , uiStatus = initUIStatus
     , connectionModalInput = C.initConnectionFields
-    , errorStatus = initErrorStatus
     }
 
 
@@ -104,6 +102,8 @@ type alias UIStatus =
     , passwordInputModalOpen : Bool
     , passwordInputModalInput : String
     , passwordInputModalTemporaryConnection : C.Connection
+    , errorModalOpen : Bool
+    , lastErrorMessage : String
     }
 
 
@@ -117,6 +117,8 @@ initUIStatus =
     , passwordInputModalOpen = False
     , passwordInputModalInput = ""
     , passwordInputModalTemporaryConnection = C.emptyConnection
+    , errorModalOpen = False
+    , lastErrorMessage = ""
     }
 
 
@@ -164,19 +166,6 @@ databaseName c =
     List.Extra.find (\( _, v ) -> v == C.system c) systemNameAndDrivers
         |> Maybe.map (\( v, _ ) -> v)
         |> Maybe.withDefault ""
-
-
-type alias ErrorStatus =
-    { errorModalOpen : Bool
-    , lastErrorMessage : String
-    }
-
-
-initErrorStatus : ErrorStatus
-initErrorStatus =
-    { errorModalOpen = False
-    , lastErrorMessage = ""
-    }
 
 
 type Msg
@@ -596,20 +585,29 @@ closePasswordInputModal model =
 
 showErrorModal : String -> Model -> Model
 showErrorModal message model =
+    let
+        oldUIStatus =
+            model.uiStatus
+    in
     { model
-        | errorStatus =
-            { errorModalOpen = True
-            , lastErrorMessage = message
+        | uiStatus =
+            { oldUIStatus
+                | errorModalOpen = True
+                , lastErrorMessage = message
             }
     }
 
 
 closeErrorModal : Model -> Model
 closeErrorModal model =
+    let
+        oldUIStatus =
+            model.uiStatus
+    in
     { model
-        | errorStatus =
-            { errorModalOpen = False
-            , lastErrorMessage = model.errorStatus.lastErrorMessage
+        | uiStatus =
+            { oldUIStatus
+                | errorModalOpen = False
             }
     }
 
@@ -674,7 +672,7 @@ viewModals model =
 
 viewErrorModal : Model -> Html Msg
 viewErrorModal model =
-    div [ class "modal", classIsActive <| model.errorStatus.errorModalOpen ]
+    div [ class "modal", classIsActive <| model.uiStatus.errorModalOpen ]
         [ div [ class "modal-background", onClick CloseErrorModal ] []
         , div [ class "modal-content" ]
             [ article [ class "message is-danger" ]
@@ -683,7 +681,7 @@ viewErrorModal model =
                     , button [ onClick CloseErrorModal, class "delete" ] []
                     ]
                 , div [ class "message-body" ]
-                    [ text model.errorStatus.lastErrorMessage ]
+                    [ text model.uiStatus.lastErrorMessage ]
                 ]
             ]
         ]
