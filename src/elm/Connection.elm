@@ -9,6 +9,8 @@ module Connection exposing
     , emptyConnection
     , encodeConnection
     , id
+    , initConnectionFields
+    , setPassword
     , sqliteConnectionSettingDecoder
     , system
     , toConnection
@@ -27,7 +29,22 @@ type alias ConnectionFields =
     , portStr : String
     , username : String
     , password : String
+    , savePassword : Maybe Bool
     , filepath : String
+    }
+
+
+initConnectionFields : ConnectionFields
+initConnectionFields =
+    { id = ""
+    , system = "server"
+    , name = ""
+    , hostname = ""
+    , portStr = ""
+    , username = ""
+    , password = ""
+    , filepath = ""
+    , savePassword = Just True
     }
 
 
@@ -42,6 +59,7 @@ toConnectionFields c =
             , portStr = s.portStr
             , username = s.username
             , password = s.password
+            , savePassword = Just s.savePassword
             , filepath = ""
             }
 
@@ -53,6 +71,7 @@ toConnectionFields c =
             , portStr = ""
             , username = ""
             , password = ""
+            , savePassword = Nothing
             , filepath = s.filepath
             }
 
@@ -76,6 +95,7 @@ toConnection c =
             , portStr = c.portStr
             , username = c.username
             , password = c.password
+            , savePassword = c.savePassword |> Maybe.withDefault True
             }
 
 
@@ -94,6 +114,7 @@ emptyConnection =
         , portStr = ""
         , username = ""
         , password = ""
+        , savePassword = True
         }
 
 
@@ -115,6 +136,20 @@ system c =
 
         SqliteConnection s ->
             s.system
+
+
+setPassword : String -> Connection -> Connection
+setPassword password conn =
+    case conn of
+        DefaultConnection s ->
+            DefaultConnection
+                { s
+                    | password = password
+                    , savePassword = True
+                }
+
+        _ ->
+            conn
 
 
 connectionsDecoder : JD.Decoder (List Connection)
@@ -148,12 +183,13 @@ type alias DefaultConnectionSetting =
     , portStr : String
     , username : String
     , password : String
+    , savePassword : Bool
     }
 
 
 defaultConnectionSettingDecoder : JD.Decoder DefaultConnectionSetting
 defaultConnectionSettingDecoder =
-    JD.map7 DefaultConnectionSetting
+    JD.map8 DefaultConnectionSetting
         (JD.field "id" JD.string)
         (JD.field "driver" JD.string)
         (JD.field "name" JD.string)
@@ -161,10 +197,19 @@ defaultConnectionSettingDecoder =
         (JD.field "port" JD.string)
         (JD.field "username" JD.string)
         (JD.field "password" JD.string)
+        (JD.field "savePassword" JD.bool)
 
 
 encodeDefaultConnection : DefaultConnectionSetting -> JE.Value
 encodeDefaultConnection c =
+    let
+        password =
+            if c.savePassword then
+                c.password
+
+            else
+                ""
+    in
     JE.object
         [ ( "type", JE.string "default" )
         , ( "id", JE.string c.id )
@@ -173,7 +218,8 @@ encodeDefaultConnection c =
         , ( "hostname", JE.string c.hostname )
         , ( "port", JE.string c.portStr )
         , ( "username", JE.string c.username )
-        , ( "password", JE.string c.password )
+        , ( "password", JE.string password )
+        , ( "savePassword", JE.bool c.savePassword )
         ]
 
 

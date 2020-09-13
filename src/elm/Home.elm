@@ -90,7 +90,7 @@ initModel : Model
 initModel =
     { connections = []
     , uiStatus = initUIStatus
-    , connectionModalInput = initConnectionFields
+    , connectionModalInput = C.initConnectionFields
     , errorStatus = initErrorStatus
     }
 
@@ -101,6 +101,9 @@ type alias UIStatus =
     , confirmRemoveConnectionModalOpen : Bool
     , confirmRemoveConnectionModalTarget : ( String, String )
     , loaderActive : Bool
+    , passwordInputModalOpen : Bool
+    , passwordInputModalInput : String
+    , passwordInputModalTemporaryConnection : C.Connection
     }
 
 
@@ -111,35 +114,21 @@ initUIStatus =
     , confirmRemoveConnectionModalOpen = False
     , confirmRemoveConnectionModalTarget = ( "", "" )
     , loaderActive = False
-    }
-
-
-initConnectionFields : C.ConnectionFields
-initConnectionFields =
-    { id = ""
-    , system = "server"
-    , name = ""
-    , hostname = ""
-    , portStr = ""
-    , username = ""
-    , password = ""
-    , filepath = ""
+    , passwordInputModalOpen = False
+    , passwordInputModalInput = ""
+    , passwordInputModalTemporaryConnection = C.emptyConnection
     }
 
 
 validConnection : C.Connection -> Bool
 validConnection c =
-    let
-        isNotEmpty =
-            not << String.isEmpty
-    in
     case c of
         C.DefaultConnection s ->
             isNotEmpty s.name
                 && isNotEmpty s.hostname
                 && validPort s.portStr
                 && isNotEmpty s.username
-                && isNotEmpty s.password
+                && validPassword s
 
         C.SqliteConnection s ->
             isNotEmpty s.name
@@ -149,6 +138,20 @@ validConnection c =
 validPort : String -> Bool
 validPort =
     String.toInt >> Maybe.withDefault 0 >> (<) 0
+
+
+validPassword : C.DefaultConnectionSetting -> Bool
+validPassword s =
+    if s.savePassword then
+        isNotEmpty s.password
+
+    else
+        True
+
+
+isNotEmpty : String -> Bool
+isNotEmpty =
+    not << String.isEmpty
 
 
 serverName : C.DefaultConnectionSetting -> String
@@ -177,7 +180,11 @@ initErrorStatus =
 
 
 type Msg
-    = OnClickLogin String
+    = OpenConnection String
+    | OpenInputPasswordModal C.Connection
+    | OnChangeInputPasswordModalPassword String
+    | SubmitInputPassword String
+    | CancelInputPassword
     | OpenConnectionComplete
     | OpenConnectionFailure
     | LoadConnections (Result JD.Error (List C.Connection))
@@ -201,6 +208,7 @@ type Msg
     | OnChangeConnectionUsername String
     | OnChangeConnectionPassword String
     | OnChangeConnectionFilepath String
+    | OnClickSavePassword
     | OpenSqliteFileDialog
     | OpenSqliteFileDialogSuccess (Result JD.Error String)
     | CloseErrorModal
@@ -217,21 +225,50 @@ update msg model =
             model.connectionModalInput
     in
     case msg of
-        OnClickLogin id ->
+        OpenConnection id ->
             let
                 selected =
                     List.Extra.find (\c -> C.id c == id) model.connections
             in
             case selected of
                 Just conn ->
-                    ( showLoader model
-                    , openConnection <| C.encodeConnection <| conn
-                    )
+                    if needToInputPassword conn then
+                        update (OpenInputPasswordModal conn) model
+
+                    else
+                        ( showLoader model
+                        , openConnection <| C.encodeConnection <| conn
+                        )
 
                 Nothing ->
                     ( showErrorModal ("Connection id is not found: =" ++ id) model
                     , Cmd.none
                     )
+
+        OpenInputPasswordModal conn ->
+            ( showPasswordInputModal conn model
+            , Cmd.none
+            )
+
+        OnChangeInputPasswordModalPassword s ->
+            ( { model
+                | uiStatus =
+                    { uiStatus
+                        | passwordInputModalInput = s
+                    }
+              }
+            , Cmd.none
+            )
+
+        SubmitInputPassword password ->
+            ( showLoader model |> closePasswordInputModal
+            , openConnection <| C.encodeConnection <| C.setPassword password <| model.uiStatus.passwordInputModalTemporaryConnection
+            )
+
+        CancelInputPassword ->
+            ( closePasswordInputModal model
+            , Cmd.none
+            )
 
         OpenConnectionComplete ->
             ( hideLoader model
@@ -270,7 +307,7 @@ update msg model =
                 CloseConnectionModal
                 { model
                     | connections = conn :: model.connections
-                    , connectionModalInput = initConnectionFields
+                    , connectionModalInput = C.initConnectionFields
                 }
 
         SaveNewConnectionSuccess (Err e) ->
@@ -288,7 +325,7 @@ update msg model =
                 CloseConnectionModal
                 { model
                     | connections = List.Extra.updateIf (\c -> C.id c == C.id conn) (\_ -> conn) model.connections
-                    , connectionModalInput = initConnectionFields
+                    , connectionModalInput = C.initConnectionFields
                 }
 
         SaveEditConnectionSuccess (Err e) ->
@@ -325,7 +362,7 @@ update msg model =
                         model.connectionModalInput
 
                     else
-                        initConnectionFields
+                        C.initConnectionFields
             in
             ( { model
                 | uiStatus =
@@ -455,6 +492,16 @@ update msg model =
             , Cmd.none
             )
 
+        OnClickSavePassword ->
+            ( { model
+                | connectionModalInput =
+                    { connectionModalInput
+                        | savePassword = Maybe.map not connectionModalInput.savePassword
+                    }
+              }
+            , Cmd.none
+            )
+
         OpenSqliteFileDialog ->
             ( model
             , openSqliteFileDialog ()
@@ -515,6 +562,38 @@ hideLoader model =
     }
 
 
+showPasswordInputModal : C.Connection -> Model -> Model
+showPasswordInputModal c model =
+    let
+        oldUIStatus =
+            model.uiStatus
+    in
+    { model
+        | uiStatus =
+            { oldUIStatus
+                | passwordInputModalOpen = True
+                , passwordInputModalInput = ""
+                , passwordInputModalTemporaryConnection = c
+            }
+    }
+
+
+closePasswordInputModal : Model -> Model
+closePasswordInputModal model =
+    let
+        oldUIStatus =
+            model.uiStatus
+    in
+    { model
+        | uiStatus =
+            { oldUIStatus
+                | passwordInputModalOpen = False
+                , passwordInputModalInput = ""
+                , passwordInputModalTemporaryConnection = C.emptyConnection
+            }
+    }
+
+
 showErrorModal : String -> Model -> Model
 showErrorModal message model =
     { model
@@ -538,6 +617,16 @@ closeErrorModal model =
 newUUID : Task.Task Never UUID.UUID
 newUUID =
     Task.map (Tuple.first << Random.step UUID.generator << Random.initialSeed << Time.posixToMillis) Time.now
+
+
+needToInputPassword : C.Connection -> Bool
+needToInputPassword c =
+    case c of
+        C.DefaultConnection s ->
+            String.isEmpty s.password
+
+        _ ->
+            False
 
 
 subscriptions : Model -> Sub Msg
@@ -576,6 +665,7 @@ viewContents model =
 viewModals : Model -> List (Html Msg)
 viewModals model =
     [ viewErrorModal model
+    , viewPasswordInputModal model
     , viewConnectionModal model
     , viewConfirmRemoveConnectionModal model
     , viewLoader model
@@ -594,6 +684,34 @@ viewErrorModal model =
                     ]
                 , div [ class "message-body" ]
                     [ text model.errorStatus.lastErrorMessage ]
+                ]
+            ]
+        ]
+
+
+viewPasswordInputModal : Model -> Html Msg
+viewPasswordInputModal model =
+    div [ class "modal", classIsActive <| model.uiStatus.passwordInputModalOpen ]
+        [ div [ class "modal-background", onClick CancelInputPassword ] []
+        , div [ class "modal-content" ]
+            [ header [ class "modal-card-head" ]
+                [ p [ class "modal-card-title" ] [ text "Confirm" ] ]
+            , section [ class "modal-card-body" ]
+                [ div [ class "container" ]
+                    [ viewHorizontalPasswordInputField "Password" model.uiStatus.passwordInputModalInput OnChangeInputPasswordModalPassword
+                    ]
+                ]
+            , footer [ class "modal-card-foot" ]
+                [ button
+                    [ onClick <| SubmitInputPassword model.uiStatus.passwordInputModalInput
+                    , class "button is-primary"
+                    ]
+                    [ text "OK" ]
+                , button
+                    [ onClick CancelInputPassword
+                    , class "button is-light"
+                    ]
+                    [ text "Cancel" ]
                 ]
             ]
         ]
@@ -724,7 +842,7 @@ viewConnectionCardHeader : String -> String -> Html Msg
 viewConnectionCardHeader id name =
     div [ class "level" ]
         [ div [ class "level-left" ]
-            [ p [ onClick <| OnClickLogin id, class "title is-6 card-icon-title" ] [ text name ]
+            [ p [ onClick <| OpenConnection id, class "title is-6 card-icon-title" ] [ text name ]
             ]
         , div [ class "level-right" ]
             [ span [ onClick <| OpenEditConnectionModal id, class "icon card-icon-edit" ] [ i [ class "fas fa-edit" ] [] ]
@@ -779,7 +897,7 @@ viewConnectionModalContent model =
                 , viewHorizontalTextInputField "Hostname" s.hostname OnChangeConnectionHostname
                 , viewHorizontalNumberInputField "Port" s.portStr OnChangeConnectionPort
                 , viewHorizontalTextInputField "Username" s.username OnChangeConnectionUsername
-                , viewHorizontalPasswordInputField "Password" s.password OnChangeConnectionPassword
+                , viewPasswordInput s.password s.savePassword
                 ]
 
         C.SqliteConnection s ->
@@ -853,6 +971,30 @@ viewHorizontalPasswordInputField =
     viewHorizontalInputField "password"
 
 
+viewPasswordInput : String -> Bool -> Html Msg
+viewPasswordInput password savePassword =
+    let
+        check =
+            if savePassword then
+                i [ class "fas fa-lg fa-check-square" ] []
+
+            else
+                i [ class "fas fa-lg fa-square" ] []
+    in
+    viewHorizontalAddonsPasswordInputField
+        (not savePassword)
+        "Password"
+        password
+        OnChangeConnectionPassword
+        (span [] [ span [ class "icon is-medium" ] [ check ], span [] [ text " Save Password" ] ])
+        OnClickSavePassword
+
+
+viewHorizontalAddonsPasswordInputField : Bool -> String -> String -> (String -> Msg) -> Html Msg -> Msg -> Html Msg
+viewHorizontalAddonsPasswordInputField =
+    viewHorizontalInputAddonsField "password"
+
+
 viewHorizontalNumberInputField : String -> String -> (String -> Msg) -> Html Msg
 viewHorizontalNumberInputField =
     viewHorizontalInputField "number"
@@ -887,11 +1029,11 @@ viewHorizontalComponent labelText children =
 
 viewHorizontalAddonsTextInputField : String -> String -> (String -> Msg) -> Html Msg -> Msg -> Html Msg
 viewHorizontalAddonsTextInputField =
-    viewHorizontalInputAddonsField "text"
+    viewHorizontalInputAddonsField "text" False
 
 
-viewHorizontalInputAddonsField : String -> String -> String -> (String -> Msg) -> Html Msg -> Msg -> Html Msg
-viewHorizontalInputAddonsField inputType labelText inputValue inputMsg buttonContent buttonMsg =
+viewHorizontalInputAddonsField : String -> Bool -> String -> String -> (String -> Msg) -> Html Msg -> Msg -> Html Msg
+viewHorizontalInputAddonsField inputType inputDisabled labelText inputValue inputMsg buttonContent buttonMsg =
     viewHorizontalAddonsComponent labelText
         [ p [ class "control is-expanded" ]
             [ input
@@ -899,6 +1041,7 @@ viewHorizontalInputAddonsField inputType labelText inputValue inputMsg buttonCon
                 , type_ inputType
                 , value inputValue
                 , onInput inputMsg
+                , disabled inputDisabled
                 ]
                 []
             ]

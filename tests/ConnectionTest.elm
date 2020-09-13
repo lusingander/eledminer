@@ -23,7 +23,8 @@ suite =
                                 "hostname": "127.0.0.1",
                                 "port": "12345",
                                 "username": "root",
-                                "password": "P@ssw0rd"
+                                "password": "P@ssw0rd",
+                                "savePassword": true
                             }
                             """
 
@@ -36,6 +37,7 @@ suite =
                                 , portStr = "12345"
                                 , username = "root"
                                 , password = "P@ssw0rd"
+                                , savePassword = True
                                 }
 
                         actual =
@@ -89,7 +91,8 @@ suite =
                                 "hostname": "127.0.0.1",
                                 "port": "12345",
                                 "username": "root",
-                                "password": "P@ssw0rd"
+                                "password": "P@ssw0rd",
+                                "savePassword": false
                             }
                             ]
                             """
@@ -110,6 +113,7 @@ suite =
                                     , portStr = "12345"
                                     , username = "root"
                                     , password = "P@ssw0rd"
+                                    , savePassword = False
                                     }
                                 ]
 
