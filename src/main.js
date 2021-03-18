@@ -121,7 +121,7 @@ function createWindow() {
   const closeSettings = () => {
     if (settingsView) {
       mainWindow.removeBrowserView(settingsView);
-      settingsView.destroy();
+      settingsView.webContents.destroy();
       settingsView = null;
     }
     mainView.setBounds(zeroContentBounds());
